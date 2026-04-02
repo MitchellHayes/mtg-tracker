@@ -1,13 +1,51 @@
-🛡️ MTG Command Center
+# 🛡️ MTG Command Center
+
 A real-time, multi-device life tracker for Magic: The Gathering.
 
-This project allows up to 8-player to track life totals, poison counters, and commander damage from a central tablet controller while broadcasting a high-visibility dashboard to a TV.
+Track life totals for up to 8 players from a central tablet controller while broadcasting a high-visibility dashboard to a TV.
 
-🚀 The Vision
-Single Source of Truth: A Python backend manages the game state.
+---
 
-Dual-View Frontend: * Tablet Mode: Large touch targets for players to update their own stats.
+## 🚀 The Vision
 
-TV Mode: A high-contrast, read-only 2x4 grid for the whole table to see.
+- **Single source of truth** — A Python (FastAPI) backend manages all game state
+- **Tablet controller** — Large touch targets for updating player stats
+- **TV dashboard** — High-contrast, read-only 2×4 grid visible to the whole table
+- **Real-time sync** — Polling every second (MVP), WebSockets planned for v2.0
 
-Real-Time Sync: Uses polling (MVP) or WebSockets (v2.0) to keep all screens in perfect harmony.
+---
+
+## 📡 API
+
+| Method | Route     | Description                  |
+|--------|-----------|------------------------------|
+| GET    | `/state`  | Returns all player life totals |
+| POST   | `/update` | Updates a player's life total  |
+
+### POST /update body
+```json
+{
+  "player_id": 1,
+  "delta": -1
+}
+```
+
+---
+
+## 🖥️ Running Locally
+
+### Backend
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn main:app --reload
+```
+
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+---

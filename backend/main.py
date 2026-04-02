@@ -1,8 +1,16 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from game_state import initialize_game, get_state, update_player
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 initialize_game(2,40)
 

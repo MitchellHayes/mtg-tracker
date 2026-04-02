@@ -1,8 +1,15 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import Controller from './Controller'
+import Dashboard from './Dashboard'
+
 function App() {
   return (
-    <div>
-      <h1>MTG Life Tracker</h1>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/controller" element={<Controller />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 

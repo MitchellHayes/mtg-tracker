@@ -2,7 +2,7 @@ import useGameState from './hooks/useGameState'
 import './Dashboard.css'
 
 function Dashboard() {
-  const gameState = useGameState()
+  const { gameState } = useGameState()
 
   return (
     <div className='dashboard'>

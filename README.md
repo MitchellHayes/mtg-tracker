@@ -34,18 +34,58 @@ Track life totals for up to 8 players from a central tablet controller while bro
 
 ## 🖥️ Running Locally
 
-### Backend
-```bash
-cd backend
-pip install -r requirements.txt
-uvicorn main:app --reload
-```
+### 🐍 Backend (Python + FastAPI)
 
-### Frontend
-```bash
-cd frontend
-npm install
-npm run dev
-```
+We use a **Python Virtual Environment** to keep dependencies isolated and avoid conflicts with Homebrew's system Python.
+
+1. **Navigate to the backend directory:**
+   ```bash
+   cd backend
+   ```
+
+2. **Create and activate the virtual environment:**
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+   *(You should see `(venv)` appear in your terminal prompt)*
+
+3. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Start the development server:**
+   ```bash
+   uvicorn main:app --reload
+   ```
+
+> **Note:** Type `deactivate` to exit the environment when finished.
+
+---
+
+### 📦 Frontend (React + Vite)
+
+The frontend requires a modern version of Node.js to support Vite's latest features.
+
+1. **Navigate to the frontend directory:**
+   ```bash
+   cd frontend
+   ```
+
+2. **Ensure the correct Node version is active:**
+   ```bash
+   nvm use 22 || nvm install 22
+   ```
+
+3. **Install packages:**
+   ```bash
+   npm install
+   ```
+
+4. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
 
 ---

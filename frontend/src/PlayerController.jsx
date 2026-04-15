@@ -1,11 +1,14 @@
 import { useState, useRef, useCallback } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSkull, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons'
+import { faSkull, faChevronDown, faChevronUp, faMagnifyingGlass, faBars } from '@fortawesome/free-solid-svg-icons'
 import { useParams } from 'react-router-dom'
 import useGameState from './hooks/useGameState'
 import useGameActions from './hooks/useGameActions'
 import nextTurnApi from './api/nextTurn'
 import GameMenu from './GameMenu'
+import CardLookup from './CardLookup'
+import { formatCommander } from './utils/formatCommander'
+import { COMMANDER_DAMAGE_WARNING, COMMANDER_DAMAGE_LETHAL, POISON_WARNING, POISON_LETHAL } from './constants'
 import './PlayerController.css'
 
 function useLongPress(onTap, onHoldTick, onHoldStart, onHoldEnd, holdInterval = 600, holdDelay = 500) {
@@ -65,6 +68,8 @@ function PlayerController() {
   const { gameState, setGameState, currentTurnId, setCurrentTurnId } = useGameState()
   const { handleLife, handleCommanderDamage, handlePoison } = useGameActions(gameState, setGameState)
   const [showExtras, setShowExtras] = useState(false)
+  const [showLookup, setShowLookup] = useState(false)
+  const gameMenuRef = useRef(null)
   const [floatDeltas, setFloatDeltas] = useState([])
   const [holdAccum, setHoldAccum] = useState(null)
   const [holdAccumFading, setHoldAccumFading] = useState(false)
@@ -155,7 +160,7 @@ function PlayerController() {
         {isMyTurn && !isEliminated && <div className='pc-your-turn'>YOUR TURN</div>}
         <div className='pc-name'>{player.name}</div>
         {player.commander && (
-          <div className='pc-commander'>{[player.commander, player.partner].filter(Boolean).join(' / ')}</div>
+          <div className='pc-commander'>{formatCommander(player.commander, player.partner)}</div>
         )}
       </div>
 
@@ -181,8 +186,7 @@ function PlayerController() {
         </div>
       </div>
 
-      {(opponents.length > 0 || true) && (
-        <div className='pc-extras-section'>
+      <div className='pc-extras-section'>
           <button className='pc-extras-header' onClick={() => setShowExtras((v) => !v)}>
             <span>Counters & Damage</span>
             <FontAwesomeIcon icon={showExtras ? faChevronUp : faChevronDown} />
@@ -197,7 +201,7 @@ function PlayerController() {
                 </div>
                 <div className='pc-cmdr-controls'>
                   <button onClick={() => { handlePoison(playerId, -1); vibrate() }}>−</button>
-                  <span className={`pc-cmdr-count ${(player.poison ?? 0) >= 5 ? 'warning' : ''} ${(player.poison ?? 0) >= 10 ? 'lethal-poison' : ''}`}>
+                  <span className={`pc-cmdr-count ${(player.poison ?? 0) >= POISON_WARNING ? 'warning' : ''} ${(player.poison ?? 0) >= POISON_LETHAL ? 'lethal-poison' : ''}`}>
                     {player.poison ?? 0}
                   </span>
                   <button onClick={() => { handlePoison(playerId, 1); vibrate() }}>+</button>
@@ -215,7 +219,7 @@ function PlayerController() {
                     ]
                     commanders.forEach(({ name, isPartner, key }) => {
                       const taken = player.commander_damage?.[key] ?? 0
-                      const lethal = taken >= 21
+                      const lethal = taken >= COMMANDER_DAMAGE_LETHAL
                       rows.push(
                         <div key={key} className={`pc-module ${lethal ? 'lethal' : ''}`}>
                           <div className='pc-module-left'>
@@ -226,7 +230,7 @@ function PlayerController() {
                           </div>
                           <div className='pc-cmdr-controls'>
                             <button onClick={() => { handleCommanderDamage(playerId, source.id, -1, isPartner); vibrate() }}>−</button>
-                            <span className={`pc-cmdr-count ${taken >= 15 ? 'warning' : ''} ${lethal ? 'lethal' : ''}`}>
+                            <span className={`pc-cmdr-count ${taken >= COMMANDER_DAMAGE_WARNING ? 'warning' : ''} ${lethal ? 'lethal' : ''}`}>
                               {taken}
                             </span>
                             <button onClick={() => { handleCommanderDamage(playerId, source.id, 1, isPartner); vibrate() }}>+</button>
@@ -241,20 +245,30 @@ function PlayerController() {
             </div>
           )}
         </div>
-      )}
 
-      {isMyTurn && !isEliminated && (
-        <div className='pc-action-bar'>
-          <button className='pc-pass-turn-btn' onClick={handlePassTurn}>Pass Turn</button>
+      <div className='pc-toolbar'>
+        <button className='pc-toolbar-icon' onClick={() => setShowLookup(true)} aria-label='Card lookup'>
+          <FontAwesomeIcon icon={faMagnifyingGlass} />
+        </button>
+        <div className='pc-toolbar-center'>
+          {isMyTurn && !isEliminated && (
+            <button className='pc-pass-turn-btn' onClick={handlePassTurn}>Pass Turn</button>
+          )}
         </div>
-      )}
+        <button className='pc-toolbar-icon' onClick={() => gameMenuRef.current?.open()} aria-label='Menu'>
+          <FontAwesomeIcon icon={faBars} />
+        </button>
+      </div>
 
       <GameMenu
+        ref={gameMenuRef}
         gameState={gameState}
         currentTurnId={currentTurnId}
         onNewGame={setGameState}
         onNextTurn={setCurrentTurnId}
       />
+
+      {showLookup && <CardLookup onClose={() => setShowLookup(false)} />}
     </div>
   )
 }

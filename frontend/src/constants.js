@@ -1,0 +1,4 @@
+export const COMMANDER_DAMAGE_WARNING = 15
+export const COMMANDER_DAMAGE_LETHAL = 21
+export const POISON_WARNING = 5
+export const POISON_LETHAL = 10

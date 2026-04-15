@@ -1,11 +1,14 @@
-import { useState } from 'react'
+import { useState, forwardRef, useImperativeHandle } from 'react'
 import { useNavigate } from 'react-router-dom'
 import GameSetup from './GameSetup'
 import nextTurnApi from './api/nextTurn'
+import { formatCommander } from './utils/formatCommander'
 import './GameMenu.css'
 
-function GameMenu({ gameState, currentTurnId, onNewGame, onNextTurn }) {
+const GameMenu = forwardRef(function GameMenu({ gameState, currentTurnId, onNewGame, onNextTurn }, ref) {
   const [open, setOpen] = useState(false)
+
+  useImperativeHandle(ref, () => ({ open: () => setOpen(true) }))
   const [showConfirm, setShowConfirm] = useState(false)
   const [showSetup, setShowSetup] = useState(false)
   const navigate = useNavigate()
@@ -34,14 +37,9 @@ function GameMenu({ gameState, currentTurnId, onNewGame, onNextTurn }) {
 
   return (
     <>
-      <button className='game-menu-fab' onClick={() => setOpen(true)} aria-label='Menu'>
-        ☰
-      </button>
-
       {open && (
         <div className='game-menu-overlay' onClick={() => setOpen(false)}>
           <div className='game-menu-sheet' onClick={(e) => e.stopPropagation()}>
-            <div className='game-menu-handle' />
 
             {currentPlayer && (
               <>
@@ -67,7 +65,7 @@ function GameMenu({ gameState, currentTurnId, onNewGame, onNextTurn }) {
                       <span className='game-menu-player-name'>{p.name}</span>
                       {p.commander && (
                         <span className='game-menu-player-commander'>
-                          {[p.commander, p.partner].filter(Boolean).join(' / ')}
+                          {formatCommander(p.commander, p.partner)}
                         </span>
                       )}
                     </button>
@@ -79,6 +77,9 @@ function GameMenu({ gameState, currentTurnId, onNewGame, onNextTurn }) {
 
             <button className='game-menu-new-game' onClick={() => { setOpen(false); setShowConfirm(true) }}>
               New Game
+            </button>
+            <button className='game-menu-close' onClick={() => setOpen(false)}>
+              Close
             </button>
           </div>
         </div>
@@ -99,6 +100,6 @@ function GameMenu({ gameState, currentTurnId, onNewGame, onNextTurn }) {
       {showSetup && <GameSetup onStart={handleStart} />}
     </>
   )
-}
+})
 
 export default GameMenu

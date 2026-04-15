@@ -318,26 +318,57 @@
   color: #4caf50;
 }
 
-/* Sticky action bar */
-.pc-action-bar {
+
+.pc-toolbar {
   position: sticky;
   bottom: 0;
   width: 100%;
-  padding: 12px 16px max(12px, env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  padding: 12px 16px max(16px, env(safe-area-inset-bottom));
   box-sizing: border-box;
   background: linear-gradient(to bottom, transparent, #1a1a2e 40%);
   margin-top: auto;
+  gap: 10px;
+}
+
+.pc-toolbar-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #4a90d9;
+  border: none;
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.08s, opacity 0.1s;
+}
+
+.pc-toolbar-icon:active {
+  transform: scale(0.93);
+  opacity: 0.85;
+}
+
+.pc-toolbar-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .pc-pass-turn-btn {
   width: 100%;
-  padding: 18px;
+  padding: 16px;
   background: #4a90d9;
   color: #fff;
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: bold;
   border: none;
-  border-radius: 14px;
+  border-radius: 999px;
   cursor: pointer;
   transition: transform 0.08s, opacity 0.1s;
   letter-spacing: 0.03em;

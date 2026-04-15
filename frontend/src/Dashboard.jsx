@@ -1,6 +1,8 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSkull } from '@fortawesome/free-solid-svg-icons'
 import useGameState from './hooks/useGameState'
+import { formatCommander } from './utils/formatCommander'
+import { COMMANDER_DAMAGE_WARNING, COMMANDER_DAMAGE_LETHAL, POISON_WARNING, POISON_LETHAL } from './constants'
 import './Dashboard.css'
 
 const COLOR_MAP = {
@@ -26,7 +28,7 @@ function CommanderDamagePips({ player, allPlayers }) {
   return (
     <div className='cmdr-dmg-pips'>
       {entries.map(({ source, commanderName, dmg }) => (
-        <span key={`${source.id}-${commanderName}`} className={`cmdr-dmg-pip ${dmg >= 21 ? 'lethal' : dmg >= 15 ? 'warning' : ''}`}>
+        <span key={`${source.id}-${commanderName}`} className={`cmdr-dmg-pip ${dmg >= COMMANDER_DAMAGE_LETHAL ? 'lethal' : dmg >= COMMANDER_DAMAGE_WARNING ? 'warning' : ''}`}>
           {commanderName} {dmg}
         </span>
       ))}
@@ -53,7 +55,7 @@ function PlayerCard({ player, allPlayers, isActiveTurn }) {
     if (stops.length) cardStyle.borderColor = stops[0]
   }
 
-  const commanderNames = [player.commander, player.partner].filter(Boolean)
+  const commanderNames = formatCommander(player.commander, player.partner)
   const overlayStyle = isEliminated
     ? 'linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7))'
     : 'linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.88) 100%)'
@@ -71,12 +73,12 @@ function PlayerCard({ player, allPlayers, isActiveTurn }) {
       {isEliminated && <div className='eliminated-banner'>ELIMINATED</div>}
       <div className='card-content'>
         <h2>{player.name}</h2>
-        {commanderNames.length > 0 && (
-          <p className='commander-name'>{commanderNames.join(' / ')}</p>
+        {commanderNames && (
+          <p className='commander-name'>{commanderNames}</p>
         )}
         <p className='life-total'>{player.life}</p>
         {(player.poison ?? 0) > 0 && (
-          <span className={`poison-pip ${player.poison >= 10 ? 'lethal' : player.poison >= 5 ? 'warning' : ''}`}>
+          <span className={`poison-pip ${player.poison >= POISON_LETHAL ? 'lethal' : player.poison >= POISON_WARNING ? 'warning' : ''}`}>
             <FontAwesomeIcon icon={faSkull} /> {player.poison}
           </span>
         )}

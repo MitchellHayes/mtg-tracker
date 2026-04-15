@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { API_URL } from './config'
+import { SCRYFALL_HEADERS } from './api/scryfall'
 import './GameSetup.css'
 
 const DEFAULT_LIFE = 40
@@ -44,7 +45,7 @@ function CommanderInput({ value, onChange, placeholder }) {
     }
     debounceRef.current = setTimeout(() => {
       fetch(`https://api.scryfall.com/cards/autocomplete?q=${encodeURIComponent(val)}&include_extras=false`, {
-        headers: { 'User-Agent': 'MTGTracker/1.0 (local commander life tracker; mitchellhayes95@outlook.com)' }
+        headers: SCRYFALL_HEADERS
       })
         .then((res) => {
           if (res.status === 429) return null

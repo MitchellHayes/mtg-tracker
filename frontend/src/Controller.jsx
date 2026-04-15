@@ -1,6 +1,7 @@
 import useGameState from './hooks/useGameState'
 import useGameActions from './hooks/useGameActions'
 import GameMenu from './GameMenu'
+import { COMMANDER_DAMAGE_WARNING, COMMANDER_DAMAGE_LETHAL } from './constants'
 import './Controller.css'
 
 function CommanderDamageTracker({ player, allPlayers, onDamage }) {
@@ -12,13 +13,13 @@ function CommanderDamageTracker({ player, allPlayers, onDamage }) {
       <div className='cmdr-damage-title'>Commander Damage</div>
       {opponents.map((source) => {
         const taken = player.commander_damage?.[source.id] ?? 0
-        const lethal = taken >= 21
+        const lethal = taken >= COMMANDER_DAMAGE_LETHAL
         return (
           <div key={source.id} className={`cmdr-damage-row ${lethal ? 'lethal' : ''}`}>
             <span className='cmdr-damage-name'>{source.name}</span>
             <div className='cmdr-damage-controls'>
               <button onClick={() => onDamage(player.id, source.id, -1)}>−</button>
-              <span className={`cmdr-damage-count ${taken >= 15 ? 'warning' : ''} ${lethal ? 'lethal' : ''}`}>
+              <span className={`cmdr-damage-count ${taken >= COMMANDER_DAMAGE_WARNING ? 'warning' : ''} ${lethal ? 'lethal' : ''}`}>
                 {taken}
               </span>
               <button onClick={() => onDamage(player.id, source.id, 1)}>+</button>

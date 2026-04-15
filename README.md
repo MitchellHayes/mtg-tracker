@@ -19,10 +19,14 @@ Each player tracks their own life on their phone, a tablet runs the full control
 
 ## Features
 
-- Up to 8 players with commander and partner support
-- Commander art pulled automatically from Scryfall
-- Commander damage tracking with 21-damage elimination
-- Life totals update automatically when commander damage is recorded
+- Up to 8 players with commander and optional partner support
+- Commander (and partner) art pulled automatically from Scryfall
+- Crossfading split art on the dashboard for partner commanders
+- Commander damage tracking per source with 21-damage lethal threshold
+- Poison counter tracking with 10-counter lethal threshold
+- Turn order tracking with active turn indicator across all views
+- Long-press life buttons to change life in increments of 5
+- In-app card lookup — search any Magic card by name and view its art, set, and rarity
 - Real-time sync across all devices via 1-second polling
 
 ---
@@ -35,6 +39,8 @@ Each player tracks their own life on their phone, a tablet runs the full control
 | POST | `/init` | Start a new game |
 | POST | `/update` | Update a player's life total |
 | POST | `/commander_damage` | Record commander damage |
+| POST | `/poison` | Update a player's poison counters |
+| POST | `/next_turn` | Advance to the next living player's turn |
 
 ---
 

@@ -1,13 +1,14 @@
 .pc-root {
-  min-height: 100dvh;
+  height: 100dvh;
   background-color: #1a1a2e;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 28px 0 0;
+  padding: max(28px, env(safe-area-inset-top)) 0 0;
   box-sizing: border-box;
   color: #e0e0e0;
   position: relative;
+  overflow: hidden;
 }
 
 .pc-root.eliminated {
@@ -175,6 +176,8 @@
   padding: 0 16px;
   box-sizing: border-box;
   margin-bottom: 16px;
+  overflow-y: auto;
+  flex-shrink: 1;
 }
 
 .pc-extras-header {

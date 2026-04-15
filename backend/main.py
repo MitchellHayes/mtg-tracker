@@ -1,5 +1,8 @@
 import asyncio
+from pathlib import Path
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Optional
 import httpx
@@ -144,3 +147,15 @@ def update_commander_damage_endpoint(request: CommanderDamageRequest):
         return update_commander_damage(request.target_id, request.source_id, request.delta, request.is_partner)
     except KeyError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+# Serve built frontend — must come after all API routes
+DIST = Path(__file__).parent.parent / "frontend" / "dist"
+if DIST.exists():
+    app.mount("/assets", StaticFiles(directory=DIST / "assets"), name="assets")
+
+    @app.get("/{full_path:path}")
+    def serve_spa(full_path: str):
+        file = DIST / full_path
+        if file.is_file():
+            return FileResponse(file)
+        return FileResponse(DIST / "index.html")

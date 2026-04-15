@@ -44,7 +44,7 @@ Each player tracks their own life on their phone, a tablet runs the full control
 
 ---
 
-## Running Locally
+## Running Locally (dev)
 
 ### Backend (Python + FastAPI)
 
@@ -65,4 +65,45 @@ npm install
 npm run dev
 ```
 
-The frontend runs on `http://localhost:5173` and expects the backend at `http://localhost:8000`.
+The frontend runs on `http://localhost:5173` and proxies API calls to `http://localhost:8000`.
+
+---
+
+## Running in LXC (or any server)
+
+Everything is served from a single port. The frontend is built to static files and served by the FastAPI backend.
+
+### Requirements
+
+- Python 3.11+
+- Node.js 22+
+
+### Setup
+
+```bash
+# Inside the container
+git clone <repo-url> mtg-tracker
+cd mtg-tracker
+bash start.sh
+```
+
+`start.sh` installs dependencies, builds the frontend, and starts the server on `http://0.0.0.0:8000`.
+
+All devices on your network can then reach the app at `http://<container-ip>:8000`.
+
+### Running as a systemd service
+
+```ini
+[Unit]
+Description=MTG Tracker
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/mtg-tracker/backend
+ExecStartPre=/bin/bash -c 'cd /opt/mtg-tracker/frontend && npm run build'
+ExecStart=/opt/mtg-tracker/backend/.venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```

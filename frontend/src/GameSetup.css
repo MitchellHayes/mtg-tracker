@@ -41,44 +41,119 @@
   flex-wrap: wrap;
 }
 
-.global-settings label {
+/* Life presets */
+.life-control {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: #a8b2d8;
-  font-size: 0.95rem;
+  gap: 10px;
 }
 
-.global-settings input {
-  width: 64px;
-  padding: 8px;
-  font-size: 1rem;
+.life-control-label {
+  color: #a8b2d8;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.life-presets {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #0f1b30;
   border: 1px solid #0f3460;
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.life-preset-btn {
+  padding: 6px 14px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: none;
   border-radius: 6px;
-  background-color: #16213e;
+  cursor: pointer;
+  background: transparent;
+  color: #a8b2d8;
+  transition: background 0.15s, color 0.15s;
+}
+
+.life-preset-btn:hover {
+  background: #16213e;
   color: #e0e0e0;
+}
+
+.life-preset-btn.active {
+  background: #e94560;
+  color: #fff;
+}
+
+.life-custom-input {
+  width: 82px;
+  padding: 6px 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #a8b2d8;
   text-align: center;
+  outline: none;
+}
+
+.life-custom-input::placeholder {
+  color: #556;
+  font-weight: 400;
+}
+
+.life-custom-input.active {
+  background: #e94560;
+  color: #fff;
+}
+
+.life-custom-input:focus {
+  background: #16213e;
+  color: #e0e0e0;
+}
+
+/* Start button */
+.start-btn-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
 }
 
 .start-btn {
-  padding: 10px 28px;
-  font-size: 1rem;
+  padding: 12px 32px;
+  font-size: 1.05rem;
   font-weight: bold;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   background-color: #e94560;
-  color: #e0e0e0;
-  transition: opacity 0.1s;
+  color: #fff;
+  transition: opacity 0.15s, transform 0.1s;
+  white-space: nowrap;
 }
 
 .start-btn:hover:not(:disabled) {
-  opacity: 0.85;
+  opacity: 0.9;
+  transform: scale(1.02);
+}
+
+.start-btn:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .start-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.35;
   cursor: default;
+  background-color: #a8b2d8;
+}
+
+.start-hint {
+  color: #a8b2d8;
+  font-size: 0.78rem;
+  text-align: right;
 }
 
 .setup-error {
@@ -101,34 +176,59 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.player-setup-card:hover {
+  border-color: #1e4080;
+  box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.08);
 }
 
 .player-setup-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-}
-
-.player-number {
-  color: #a8b2d8;
-  font-size: 0.85rem;
-  white-space: nowrap;
+  gap: 10px;
+  justify-content: space-between;
 }
 
 .player-name-input {
   flex: 1;
+  min-width: 0;
   padding: 8px 12px;
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: bold;
   border: 1px solid #0f3460;
   border-radius: 6px;
   background-color: #1a1a2e;
   color: #e0e0e0;
+  transition: border-color 0.15s;
 }
 
 .player-name-input:focus {
   outline: none;
   border-color: #e94560;
+}
+
+.remove-player-btn {
+  background: none;
+  border: none;
+  color: #556;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 2px 4px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+
+.remove-player-btn:hover {
+  color: #e94560;
+}
+
+.setup-divider {
+  height: 1px;
+  background: #0f3460;
+  margin: 0 -4px;
 }
 
 /* Sections */
@@ -138,13 +238,13 @@
   gap: 8px;
 }
 
-.setup-section > label {
+.setup-section > label:not(.partner-toggle) {
   color: #a8b2d8;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
+  font-weight: 600;
 }
-
 
 /* Commander autocomplete */
 .commander-input-wrapper {
@@ -153,18 +253,24 @@
 
 .commander-input-wrapper input {
   width: 100%;
-  padding: 8px 12px;
+  padding: 9px 12px;
   font-size: 0.95rem;
   border: 1px solid #0f3460;
   border-radius: 6px;
   background-color: #1a1a2e;
   color: #e0e0e0;
   box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+
+.commander-input-wrapper input::placeholder {
+  color: #667;
 }
 
 .commander-input-wrapper input:focus {
   outline: none;
   border-color: #e94560;
+  box-shadow: 0 0 0 2px rgba(233, 69, 96, 0.15);
 }
 
 .autocomplete-list {
@@ -194,6 +300,43 @@
   background-color: #0f3460;
 }
 
+/* Commander chip */
+.commander-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background-color: #0f3460;
+  border: 1px solid #1e4a80;
+  border-radius: 6px;
+  gap: 8px;
+}
+
+.commander-chip-name {
+  color: #e0e0e0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commander-chip-clear {
+  background: none;
+  border: none;
+  color: #a8b2d8;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0 2px;
+  flex-shrink: 0;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.commander-chip-clear:hover {
+  color: #e94560;
+}
+
 /* Partner toggle */
 .partner-toggle {
   display: flex;
@@ -209,4 +352,43 @@
   width: 16px;
   height: 16px;
   cursor: pointer;
+}
+
+/* Add player card */
+.add-player-card {
+  background-color: transparent;
+  border: 2px dashed #1e3460;
+  border-radius: 12px;
+  padding: 20px;
+  color: #a8b2d8;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, box-shadow 0.15s;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.add-player-icon {
+  font-size: 1.8rem;
+  line-height: 1;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.add-player-card:hover {
+  border-color: #e94560;
+  color: #e94560;
+  box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.1);
+}
+
+.add-player-card:hover .add-player-icon {
+  opacity: 1;
+}
+
+.add-player-card:active {
+  transform: scale(0.98);
 }

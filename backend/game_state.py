@@ -14,7 +14,7 @@ class Player(BaseModel):
     commander_image: Optional[str] = None
     partner: Optional[str] = None
     partner_image: Optional[str] = None
-    commander_damage: dict[int, int] = {}  # attacker_player_id -> damage taken
+    commander_damage: dict[str, int] = {}  # "{player_id}" or "{player_id}_p" -> damage taken
     poison: int = 0
 
 player_health: dict[int, Player] = {}
@@ -66,8 +66,11 @@ def next_turn():
     ids = sorted(player_health.keys())
     if not ids:
         return current_turn_id
-    idx = ids.index(current_turn_id) if current_turn_id in ids else -1
-    current_turn_id = ids[(idx + 1) % len(ids)]
+    active_ids = [i for i in ids if player_health[i].life > 0]
+    if not active_ids:
+        return current_turn_id
+    idx = active_ids.index(current_turn_id) if current_turn_id in active_ids else -1
+    current_turn_id = active_ids[(idx + 1) % len(active_ids)]
     _save()
     return current_turn_id
 
@@ -88,11 +91,12 @@ def update_poison(player_id: int, delta: int):
     except KeyError:
         raise KeyError(f"Player {player_id} does not exist")
 
-def update_commander_damage(target_id: int, source_id: int, delta: int):
+def update_commander_damage(target_id: int, source_id: int, delta: int, is_partner: bool = False):
     try:
         player = player_health[target_id]
-        current = player.commander_damage.get(source_id, 0)
-        player.commander_damage[source_id] = max(0, current + delta)
+        key = f"{source_id}_p" if is_partner else str(source_id)
+        current = player.commander_damage.get(key, 0)
+        player.commander_damage[key] = max(0, current + delta)
         _save()
         return player
     except KeyError:

@@ -13,15 +13,21 @@ const COLOR_MAP = {
 
 function CommanderDamagePips({ player, allPlayers }) {
   const entries = Object.entries(player.commander_damage ?? {})
-    .map(([sourceId, dmg]) => ({ source: allPlayers[parseInt(sourceId)], dmg }))
+    .map(([key, dmg]) => {
+      const isPartner = key.endsWith('_p')
+      const sourceId = parseInt(isPartner ? key.slice(0, -2) : key)
+      const source = allPlayers[sourceId]
+      const commanderName = isPartner ? source?.partner : source?.commander
+      return { source, commanderName, dmg }
+    })
     .filter(({ source, dmg }) => source && dmg > 0)
   if (entries.length === 0) return null
 
   return (
     <div className='cmdr-dmg-pips'>
-      {entries.map(({ source, dmg }) => (
-        <span key={source.id} className={`cmdr-dmg-pip ${dmg >= 21 ? 'lethal' : dmg >= 15 ? 'warning' : ''}`}>
-          {source.name} {dmg}
+      {entries.map(({ source, commanderName, dmg }) => (
+        <span key={`${source.id}-${commanderName}`} className={`cmdr-dmg-pip ${dmg >= 21 ? 'lethal' : dmg >= 15 ? 'warning' : ''}`}>
+          {commanderName} {dmg}
         </span>
       ))}
     </div>
@@ -30,14 +36,15 @@ function CommanderDamagePips({ player, allPlayers }) {
 
 function PlayerCard({ player, allPlayers, isActiveTurn }) {
   const isEliminated = player.life <= 0
-  const artImage = player.commander_image || player.partner_image
+  const hasSplitArt = player.commander_image && player.partner_image
+  const singleArt = !hasSplitArt && (player.commander_image || player.partner_image)
 
   const cardStyle = {}
-  if (artImage) {
+  if (singleArt) {
     const overlay = isEliminated
       ? 'linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7))'
       : 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0.85) 100%)'
-    cardStyle.backgroundImage = `${overlay}, url(${artImage})`
+    cardStyle.backgroundImage = `${overlay}, url(${singleArt})`
     cardStyle.backgroundSize = 'cover'
     cardStyle.backgroundPosition = 'center top'
   }
@@ -47,9 +54,19 @@ function PlayerCard({ player, allPlayers, isActiveTurn }) {
   }
 
   const commanderNames = [player.commander, player.partner].filter(Boolean)
+  const overlayStyle = isEliminated
+    ? 'linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7))'
+    : 'linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.88) 100%)'
 
   return (
     <div className={`player-card ${isEliminated ? 'eliminated' : ''} ${isActiveTurn ? 'active-turn' : ''}`} style={cardStyle}>
+      {hasSplitArt && (
+        <div className='card-art-split'>
+          <div className='card-art-crossfade-a' style={{ backgroundImage: `url(${player.commander_image})` }} />
+          <div className='card-art-crossfade-b' style={{ backgroundImage: `url(${player.partner_image})` }} />
+          <div className='card-art-overlay' style={{ background: overlayStyle }} />
+        </div>
+      )}
       {isActiveTurn && !isEliminated && <div className='active-turn-banner'>ACTIVE TURN</div>}
       {isEliminated && <div className='eliminated-banner'>ELIMINATED</div>}
       <div className='card-content'>

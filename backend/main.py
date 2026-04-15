@@ -136,10 +136,11 @@ class CommanderDamageRequest(BaseModel):
     target_id: int
     source_id: int
     delta: int
+    is_partner: bool = False
 
 @app.post("/commander_damage")
 def update_commander_damage_endpoint(request: CommanderDamageRequest):
     try:
-        return update_commander_damage(request.target_id, request.source_id, request.delta)
+        return update_commander_damage(request.target_id, request.source_id, request.delta, request.is_partner)
     except KeyError as e:
         raise HTTPException(status_code=404, detail=str(e))

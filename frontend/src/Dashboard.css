@@ -38,18 +38,21 @@
 
 .dashboard .player-card.active-turn {
   border-color: #4a90d9;
-  box-shadow: 0 0 16px rgba(74, 144, 217, 0.4);
+  box-shadow: 0 0 0 2px #4a90d9, 0 0 32px rgba(74, 144, 217, 0.6);
 }
 
 .active-turn-banner {
   position: absolute;
-  top: 12px;
-  left: 12px;
-  font-size: clamp(0.6rem, 1.2vw, 0.8rem);
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: clamp(4px, 0.8vh, 8px) 0;
+  background: #4a90d9;
+  font-size: clamp(0.6rem, 1.3vw, 0.85rem);
   font-weight: 900;
-  letter-spacing: 0.12em;
-  color: #4a90d9;
-  text-shadow: 0 0 6px #000;
+  letter-spacing: 0.18em;
+  color: #fff;
+  text-align: center;
   z-index: 2;
 }
 
@@ -73,6 +76,41 @@
   white-space: nowrap;
   pointer-events: none;
   z-index: 2;
+}
+
+.card-art-split {
+  position: absolute;
+  inset: 0;
+}
+
+.card-art-crossfade-a,
+.card-art-crossfade-b {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center top;
+}
+
+.card-art-crossfade-a {
+  animation: crossfade 20s ease-in-out infinite;
+}
+
+.card-art-crossfade-b {
+  animation: crossfade 20s ease-in-out infinite;
+  animation-delay: -10s;
+}
+
+@keyframes crossfade {
+  0%, 45%  { opacity: 1; }
+  50%, 95% { opacity: 0; }
+  100%     { opacity: 1; }
+}
+
+.card-art-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .card-content {

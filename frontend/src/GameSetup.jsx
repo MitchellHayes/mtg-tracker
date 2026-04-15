@@ -3,6 +3,7 @@ import { API_URL } from './config'
 import './GameSetup.css'
 
 const DEFAULT_LIFE = 40
+const LIFE_PRESETS = [20, 30, 40]
 
 function makePlayer(index) {
   return {
@@ -16,6 +17,7 @@ function makePlayer(index) {
 function CommanderInput({ value, onChange, placeholder }) {
   const [suggestions, setSuggestions] = useState([])
   const [open, setOpen] = useState(false)
+  const [committed, setCommitted] = useState(false)
   const debounceRef = useRef(null)
   const wrapperRef = useRef(null)
 
@@ -31,6 +33,7 @@ function CommanderInput({ value, onChange, placeholder }) {
 
   const handleChange = (e) => {
     const val = e.target.value
+    setCommitted(false)
     onChange(val)
 
     clearTimeout(debounceRef.current)
@@ -58,20 +61,35 @@ function CommanderInput({ value, onChange, placeholder }) {
 
   const handleSelect = (name) => {
     onChange(name)
+    setCommitted(true)
+    setSuggestions([])
+    setOpen(false)
+  }
+
+  const handleClear = () => {
+    onChange('')
+    setCommitted(false)
     setSuggestions([])
     setOpen(false)
   }
 
   return (
     <div className='commander-input-wrapper' ref={wrapperRef}>
-      <input
-        type='text'
-        value={value}
-        onChange={handleChange}
-        onFocus={() => suggestions.length > 0 && setOpen(true)}
-        placeholder={placeholder}
-        autoComplete='off'
-      />
+      {committed && value ? (
+        <div className='commander-chip'>
+          <span className='commander-chip-name'>{value}</span>
+          <button type='button' className='commander-chip-clear' onClick={handleClear}>✕</button>
+        </div>
+      ) : (
+        <input
+          type='text'
+          value={value}
+          onChange={handleChange}
+          onFocus={() => suggestions.length > 0 && setOpen(true)}
+          placeholder={placeholder}
+          autoComplete='off'
+        />
+      )}
       {open && suggestions.length > 0 && (
         <ul className='autocomplete-list'>
           {suggestions.slice(0, 8).map((name) => (
@@ -85,11 +103,10 @@ function CommanderInput({ value, onChange, placeholder }) {
   )
 }
 
-function PlayerSetupCard({ index, player, onChange }) {
+function PlayerSetupCard({ index, player, onChange, onRemove, canRemove }) {
   return (
     <div className='player-setup-card'>
       <div className='player-setup-header'>
-        <span className='player-number'>Player {index + 1}</span>
         <input
           className='player-name-input'
           type='text'
@@ -97,14 +114,19 @@ function PlayerSetupCard({ index, player, onChange }) {
           onChange={(e) => onChange({ ...player, name: e.target.value })}
           placeholder={`Player ${index + 1}`}
         />
+        {canRemove && (
+          <button type='button' className='remove-player-btn' onClick={onRemove}>✕</button>
+        )}
       </div>
 
+      <div className='setup-divider' />
+
       <div className='setup-section'>
-        <label>Commander</label>
+        <label>Choose Commander</label>
         <CommanderInput
           value={player.commander}
           onChange={(val) => onChange({ ...player, commander: val })}
-          placeholder='Search for a card...'
+          placeholder='e.g. Atraxa, Muldrotha…'
         />
       </div>
 
@@ -121,7 +143,7 @@ function PlayerSetupCard({ index, player, onChange }) {
           <CommanderInput
             value={player.partner}
             onChange={(val) => onChange({ ...player, partner: val })}
-            placeholder='Search for a partner...'
+            placeholder='e.g. Kraum, Tymna…'
           />
         )}
       </div>
@@ -131,27 +153,30 @@ function PlayerSetupCard({ index, player, onChange }) {
 
 function GameSetup({ onStart }) {
   const [startingLife, setStartingLife] = useState(DEFAULT_LIFE)
+  const [customLife, setCustomLife] = useState('')
   const [players, setPlayers] = useState(() => [makePlayer(0), makePlayer(1)])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  const setPlayerCount = (n) => {
-    const count = Math.min(8, Math.max(1, n))
-    setPlayers((prev) => {
-      if (count > prev.length) {
-        const added = Array.from({ length: count - prev.length }, (_, i) => makePlayer(prev.length + i))
-        return [...prev, ...added]
-      }
-      return prev.slice(0, count)
-    })
+  const addPlayer = () => {
+    if (players.length >= 8) return
+    setPlayers((prev) => [...prev, makePlayer(prev.length)])
+  }
+
+  const removePlayer = (index) => {
+    setPlayers((prev) => prev.filter((_, i) => i !== index))
   }
 
   const updatePlayer = (index, updated) => {
     setPlayers((prev) => prev.map((p, i) => (i === index ? updated : p)))
   }
 
+  const playersWithCommander = players.filter((p) => p.commander.trim())
+  const canStart = players.length >= 2 && playersWithCommander.length >= 2
+
   const handleSubmit = (e) => {
     e.preventDefault()
+    if (!canStart) return
     const payload = {
       starting_life: startingLife,
       players: players.map((p, i) => ({
@@ -179,35 +204,59 @@ function GameSetup({ onStart }) {
       .finally(() => setLoading(false))
   }
 
+  const handleLifePreset = (val) => {
+    setStartingLife(val)
+    setCustomLife('')
+  }
+
+  const handleCustomLife = (e) => {
+    const val = e.target.value
+    setCustomLife(val)
+    const n = parseInt(val)
+    if (!isNaN(n) && n > 0) setStartingLife(n)
+  }
+
+  const isCustomLife = !LIFE_PRESETS.includes(startingLife)
+
   return (
     <div className='game-setup-overlay'>
       <form className='game-setup' onSubmit={handleSubmit}>
         <div className='setup-top-bar'>
           <h1>New Game</h1>
           <div className='global-settings'>
-            <label>
-              Players
-              <input
-                type='number'
-                min={1}
-                max={8}
-                value={players.length}
-                onChange={(e) => setPlayerCount(Number(e.target.value))}
-              />
-            </label>
-            <label>
-              Starting Life
-              <input
-                type='number'
-                min={1}
-                value={startingLife}
-                onChange={(e) => setStartingLife(Number(e.target.value))}
-              />
-            </label>
+            <div className='life-control'>
+              <span className='life-control-label'>Starting Life</span>
+              <div className='life-presets'>
+                {LIFE_PRESETS.map((v) => (
+                  <button
+                    key={v}
+                    type='button'
+                    className={`life-preset-btn ${startingLife === v && !isCustomLife ? 'active' : ''}`}
+                    onClick={() => handleLifePreset(v)}
+                  >
+                    {v}
+                  </button>
+                ))}
+                <input
+                  className={`life-custom-input ${isCustomLife ? 'active' : ''}`}
+                  type='number'
+                  min={1}
+                  placeholder='Custom'
+                  value={customLife}
+                  onChange={handleCustomLife}
+                  onFocus={() => setCustomLife(isCustomLife ? String(startingLife) : '')}
+                />
+              </div>
+            </div>
             {error && <span className='setup-error'>{error}</span>}
-            <button type='submit' className='start-btn' disabled={loading}>
-              {loading ? 'Starting…' : 'Start Game'}
-            </button>
+            <div className='start-btn-wrap'>
+              <button type='submit' className='start-btn' disabled={loading || !canStart}>
+                {loading ? 'Starting…' : 'Start Game'}
+              </button>
+              {!canStart && (
+                <span className='start-hint'>Add at least 2 players and choose commanders</span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -218,8 +267,16 @@ function GameSetup({ onStart }) {
               index={i}
               player={player}
               onChange={(updated) => updatePlayer(i, updated)}
+              onRemove={() => removePlayer(i)}
+              canRemove={players.length > 1}
             />
           ))}
+          {players.length < 8 && (
+            <button type='button' className='add-player-card' onClick={addPlayer}>
+              <span className='add-player-icon'>＋</span>
+              <span>Add Player</span>
+            </button>
+          )}
         </div>
       </form>
     </div>

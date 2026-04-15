@@ -1,3 +1,5 @@
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faSkull } from '@fortawesome/free-solid-svg-icons'
 import useGameState from './hooks/useGameState'
 import './Dashboard.css'
 
@@ -56,6 +58,11 @@ function PlayerCard({ player, allPlayers, isActiveTurn }) {
           <p className='commander-name'>{commanderNames.join(' / ')}</p>
         )}
         <p className='life-total'>{player.life}</p>
+        {(player.poison ?? 0) > 0 && (
+          <span className={`poison-pip ${player.poison >= 10 ? 'lethal' : player.poison >= 5 ? 'warning' : ''}`}>
+            <FontAwesomeIcon icon={faSkull} /> {player.poison}
+          </span>
+        )}
         <CommanderDamagePips player={player} allPlayers={allPlayers} />
       </div>
     </div>

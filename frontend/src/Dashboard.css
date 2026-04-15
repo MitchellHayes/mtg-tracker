@@ -101,6 +101,25 @@
   font-style: italic;
 }
 
+.poison-pip {
+  font-size: clamp(0.6rem, 1.2vw, 0.85rem);
+  font-weight: bold;
+  padding: 2px 10px;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #a8b2d8;
+  text-shadow: 0 0 4px #000;
+}
+
+.poison-pip.warning {
+  color: #f5a623;
+}
+
+.poison-pip.lethal {
+  color: #e94560;
+  background: rgba(233, 69, 96, 0.25);
+}
+
 .cmdr-dmg-pips {
   display: flex;
   flex-wrap: wrap;

@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 import httpx
-from game_state import initialize_game, get_state, update_player, update_commander_damage, next_turn
+from game_state import initialize_game, get_state, update_player, update_poison, update_commander_damage, next_turn
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -118,6 +118,17 @@ class UpdateRequest(BaseModel):
 def update_game_state(request: UpdateRequest):
     try:
         return update_player(request.player_id, request.delta)
+    except KeyError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+class PoisonRequest(BaseModel):
+    player_id: int
+    delta: int
+
+@app.post("/poison")
+def update_poison_endpoint(request: PoisonRequest):
+    try:
+        return update_poison(request.player_id, request.delta)
     except KeyError as e:
         raise HTTPException(status_code=404, detail=str(e))
 

@@ -15,6 +15,7 @@ class Player(BaseModel):
     partner: Optional[str] = None
     partner_image: Optional[str] = None
     commander_damage: dict[int, int] = {}  # attacker_player_id -> damage taken
+    poison: int = 0
 
 player_health: dict[int, Player] = {}
 current_turn_id: int = 1
@@ -75,6 +76,15 @@ def update_player(player_id, delta):
         player_health[player_id].life += delta
         _save()
         return player_health[player_id]
+    except KeyError:
+        raise KeyError(f"Player {player_id} does not exist")
+
+def update_poison(player_id: int, delta: int):
+    try:
+        player = player_health[player_id]
+        player.poison = max(0, player.poison + delta)
+        _save()
+        return player
     except KeyError:
         raise KeyError(f"Player {player_id} does not exist")
 

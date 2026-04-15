@@ -1,0 +1,173 @@
+.game-menu-fab {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #0f3460;
+  color: #e0e0e0;
+  font-size: 1.4rem;
+  border: none;
+  cursor: pointer;
+  z-index: 50;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.game-menu-fab:active {
+  background: #e94560;
+}
+
+/* Bottom sheet */
+.game-menu-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+}
+
+.game-menu-sheet {
+  width: 100%;
+  background: #16213e;
+  border-radius: 20px 20px 0 0;
+  padding: 12px 20px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.5);
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.game-menu-handle {
+  width: 40px;
+  height: 4px;
+  background: #0f3460;
+  border-radius: 2px;
+  align-self: center;
+  margin-bottom: 8px;
+}
+
+.game-menu-section-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6a7499;
+  padding: 4px 0;
+}
+
+.game-menu-players {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.game-menu-player-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 14px 16px;
+  background: #1a1a2e;
+  border: 1px solid #0f3460;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s;
+}
+
+.game-menu-player-btn:active {
+  border-color: #e94560;
+}
+
+.game-menu-player-name {
+  font-size: 1.05rem;
+  font-weight: bold;
+  color: #e0e0e0;
+}
+
+.game-menu-player-commander {
+  font-size: 0.82rem;
+  color: #6a7499;
+  font-style: italic;
+}
+
+.game-menu-divider {
+  height: 1px;
+  background: #0f3460;
+  margin: 4px 0;
+}
+
+.game-menu-new-game {
+  padding: 16px;
+  background: #e94560;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.game-menu-new-game:active {
+  opacity: 0.85;
+}
+
+/* Confirm modal — shared styles used by GameMenu */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.confirm-modal {
+  background: #16213e;
+  border: 2px solid #0f3460;
+  border-radius: 12px;
+  padding: 28px 32px;
+  text-align: center;
+  color: #e0e0e0;
+  max-width: 340px;
+  width: 90%;
+}
+
+.confirm-modal p {
+  margin: 0 0 20px;
+  font-size: 1.1rem;
+}
+
+.confirm-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.confirm-buttons button {
+  padding: 10px 24px;
+  font-size: 1rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.confirm-cancel {
+  background: #0f3460;
+  color: #e0e0e0;
+}
+
+.confirm-ok {
+  background: #e94560;
+  color: #fff;
+}

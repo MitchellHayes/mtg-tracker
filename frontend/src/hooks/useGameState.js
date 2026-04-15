@@ -5,13 +5,15 @@ function useGameState() {
   const [gameState, setGameState] = useState({})
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const fetchState = () => {
       fetch(`${API_URL}/state`)
         .then((res) => res.json())
         .then((data) => setGameState(data))
         .catch((err) => console.error('Error fetching game state:', err))
-    }, 1000)
+    }
 
+    fetchState()
+    const interval = setInterval(fetchState, 1000)
     return () => clearInterval(interval)
   }, [])
 

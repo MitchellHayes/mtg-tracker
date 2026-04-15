@@ -9,7 +9,24 @@ const COLOR_MAP = {
   G: '#3a9e5f',
 }
 
-function PlayerCard({ player }) {
+function CommanderDamagePips({ player, allPlayers }) {
+  const entries = Object.entries(player.commander_damage ?? {})
+    .map(([sourceId, dmg]) => ({ source: allPlayers[parseInt(sourceId)], dmg }))
+    .filter(({ source, dmg }) => source && dmg > 0)
+  if (entries.length === 0) return null
+
+  return (
+    <div className='cmdr-dmg-pips'>
+      {entries.map(({ source, dmg }) => (
+        <span key={source.id} className={`cmdr-dmg-pip ${dmg >= 21 ? 'lethal' : dmg >= 15 ? 'warning' : ''}`}>
+          {source.name} {dmg}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+function PlayerCard({ player, allPlayers, isActiveTurn }) {
   const isEliminated = player.life <= 0
   const artImage = player.commander_image || player.partner_image
 
@@ -30,7 +47,8 @@ function PlayerCard({ player }) {
   const commanderNames = [player.commander, player.partner].filter(Boolean)
 
   return (
-    <div className={`player-card ${isEliminated ? 'eliminated' : ''}`} style={cardStyle}>
+    <div className={`player-card ${isEliminated ? 'eliminated' : ''} ${isActiveTurn ? 'active-turn' : ''}`} style={cardStyle}>
+      {isActiveTurn && !isEliminated && <div className='active-turn-banner'>ACTIVE TURN</div>}
       {isEliminated && <div className='eliminated-banner'>ELIMINATED</div>}
       <div className='card-content'>
         <h2>{player.name}</h2>
@@ -38,13 +56,14 @@ function PlayerCard({ player }) {
           <p className='commander-name'>{commanderNames.join(' / ')}</p>
         )}
         <p className='life-total'>{player.life}</p>
+        <CommanderDamagePips player={player} allPlayers={allPlayers} />
       </div>
     </div>
   )
 }
 
 function Dashboard() {
-  const { gameState } = useGameState()
+  const { gameState, currentTurnId } = useGameState()
 
   const players = Object.values(gameState)
   const n = players.length
@@ -55,7 +74,7 @@ function Dashboard() {
       <h1>MTG Life Tracker</h1>
       <div className='grid-container' style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
         {players.map((player) => (
-          <PlayerCard key={player.id} player={player} />
+          <PlayerCard key={player.id} player={player} allPlayers={gameState} isActiveTurn={player.id === currentTurnId} />
         ))}
       </div>
     </div>

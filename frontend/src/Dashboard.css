@@ -36,6 +36,23 @@
   transition: border-color 0.3s;
 }
 
+.dashboard .player-card.active-turn {
+  border-color: #4a90d9;
+  box-shadow: 0 0 16px rgba(74, 144, 217, 0.4);
+}
+
+.active-turn-banner {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  font-size: clamp(0.6rem, 1.2vw, 0.8rem);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: #4a90d9;
+  text-shadow: 0 0 6px #000;
+  z-index: 2;
+}
+
 .dashboard .player-card.eliminated {
   filter: grayscale(60%);
 }
@@ -82,6 +99,34 @@
   margin: 0;
   text-shadow: 0 0 4px #000, 1px 1px 0 #000, -1px -1px 0 #000;
   font-style: italic;
+}
+
+.cmdr-dmg-pips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.cmdr-dmg-pip {
+  font-size: clamp(0.6rem, 1.2vw, 0.85rem);
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #a8b2d8;
+  text-shadow: 0 0 4px #000;
+  white-space: nowrap;
+}
+
+.cmdr-dmg-pip.warning {
+  color: #f5a623;
+}
+
+.cmdr-dmg-pip.lethal {
+  color: #e94560;
+  background: rgba(233, 69, 96, 0.25);
 }
 
 .life-total {

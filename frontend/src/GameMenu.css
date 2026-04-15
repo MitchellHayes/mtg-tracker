@@ -68,6 +68,34 @@
   gap: 6px;
 }
 
+.game-menu-turn-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 4px;
+}
+
+.game-menu-turn-name {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #e0e0e0;
+}
+
+.game-menu-pass-btn {
+  padding: 10px 20px;
+  background: #0f3460;
+  color: #e0e0e0;
+  font-size: 0.95rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.game-menu-pass-btn:active {
+  background: #e94560;
+}
+
 .game-menu-player-btn {
   display: flex;
   flex-direction: column;
@@ -84,6 +112,10 @@
 
 .game-menu-player-btn:active {
   border-color: #e94560;
+}
+
+.game-menu-player-btn.active-turn {
+  border-color: #4a90d9;
 }
 
 .game-menu-player-name {

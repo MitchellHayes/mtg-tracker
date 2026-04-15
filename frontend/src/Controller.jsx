@@ -31,7 +31,7 @@ function CommanderDamageTracker({ player, allPlayers, onDamage }) {
 }
 
 function Controller() {
-  const { gameState, setGameState } = useGameState()
+  const { gameState, setGameState, currentTurnId, setCurrentTurnId } = useGameState()
   const { handleLife, handleCommanderDamage } = useGameActions(gameState, setGameState)
 
   const players = Object.values(gameState)
@@ -63,7 +63,12 @@ function Controller() {
         ))}
       </div>
 
-      <GameMenu gameState={gameState} onNewGame={setGameState} />
+      <GameMenu
+        gameState={gameState}
+        currentTurnId={currentTurnId}
+        onNewGame={setGameState}
+        onNextTurn={setCurrentTurnId}
+      />
     </div>
   )
 }

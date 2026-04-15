@@ -40,9 +40,15 @@ function CommanderInput({ value, onChange, placeholder }) {
       return
     }
     debounceRef.current = setTimeout(() => {
-      fetch(`https://api.scryfall.com/cards/autocomplete?q=${encodeURIComponent(val)}&include_extras=false`)
-        .then((res) => res.json())
+      fetch(`https://api.scryfall.com/cards/autocomplete?q=${encodeURIComponent(val)}&include_extras=false`, {
+        headers: { 'User-Agent': 'MTGTracker/1.0 (local commander life tracker; mitchellhayes95@outlook.com)' }
+      })
+        .then((res) => {
+          if (res.status === 429) return null
+          return res.json()
+        })
         .then((data) => {
+          if (!data) return
           setSuggestions(data.data || [])
           setOpen(true)
         })

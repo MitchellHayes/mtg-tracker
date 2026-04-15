@@ -1,13 +1,14 @@
 import { useParams } from 'react-router-dom'
 import useGameState from './hooks/useGameState'
 import useGameActions from './hooks/useGameActions'
+import nextTurnApi from './api/nextTurn'
 import GameMenu from './GameMenu'
 import './PlayerController.css'
 
 function PlayerController() {
   const { id } = useParams()
   const playerId = parseInt(id)
-  const { gameState, setGameState } = useGameState()
+  const { gameState, setGameState, currentTurnId, setCurrentTurnId } = useGameState()
   const { handleLife, handleCommanderDamage } = useGameActions(gameState, setGameState)
 
   const player = gameState[playerId]
@@ -15,11 +16,20 @@ function PlayerController() {
 
   if (!player) return null
 
-const isEliminated = player.life <= 0
+  const isEliminated = player.life <= 0
+  const isMyTurn = currentTurnId === playerId
+
+  const handlePassTurn = () => {
+    nextTurnApi().then((data) => {
+      if (data?.current_turn_id) setCurrentTurnId(data.current_turn_id)
+    })
+  }
 
   return (
     <div className={`pc-root ${isEliminated ? 'eliminated' : ''}`}>
       {isEliminated && <div className='pc-eliminated-banner'>ELIMINATED</div>}
+
+      {isMyTurn && !isEliminated && <div className='pc-your-turn'>YOUR TURN</div>}
 
       <div className='pc-name'>{player.name}</div>
       {player.commander && (
@@ -29,9 +39,13 @@ const isEliminated = player.life <= 0
       <div className='pc-life-total'>{player.life}</div>
 
       <div className='pc-life-buttons'>
-        <button className='pc-btn pc-btn-minus' onClick={() => handleLife(playerId, -1)}>−1</button>
-        <button className='pc-btn pc-btn-plus' onClick={() => handleLife(playerId, 1)}>+1</button>
+        <button className='pc-btn pc-btn-minus' onClick={() => handleLife(playerId, -1)} disabled={isEliminated}>−1</button>
+        <button className='pc-btn pc-btn-plus' onClick={() => handleLife(playerId, 1)} disabled={isEliminated}>+1</button>
       </div>
+
+      {isMyTurn && !isEliminated && (
+        <button className='pc-pass-turn-btn' onClick={handlePassTurn}>Pass Turn</button>
+      )}
 
       {opponents.length > 0 && (
         <div className='pc-cmdr-section'>
@@ -58,7 +72,12 @@ const isEliminated = player.life <= 0
         </div>
       )}
 
-      <GameMenu gameState={gameState} onNewGame={setGameState} />
+      <GameMenu
+        gameState={gameState}
+        currentTurnId={currentTurnId}
+        onNewGame={setGameState}
+        onNextTurn={setCurrentTurnId}
+      />
     </div>
   )
 }

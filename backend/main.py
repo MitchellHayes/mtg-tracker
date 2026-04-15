@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 import httpx
-from game_state import initialize_game, get_state, update_player, update_commander_damage
+from game_state import initialize_game, get_state, update_player, update_commander_damage, next_turn
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -29,10 +29,12 @@ def extract_art_crop(card: dict) -> Optional[str]:
         return faces[0]["image_uris"].get("art_crop")
     return None
 
+SCRYFALL_HEADERS = {"User-Agent": "MTGTracker/1.0 (local commander life tracker; mitchellhayes95@outlook.com)"}
+
 async def fetch_card_data(client: httpx.AsyncClient, name: str) -> dict:
     """Returns colors, exact name, and art_crop image URL for a card."""
     try:
-        resp = await client.get(SCRYFALL_NAMED, params={"exact": name})
+        resp = await client.get(SCRYFALL_NAMED, params={"exact": name}, headers=SCRYFALL_HEADERS)
         resp.raise_for_status()
         card = resp.json()
         return {
@@ -85,6 +87,10 @@ async def resolve_player_scryfall_data(players: list[dict]) -> list[dict]:
 @app.get("/state")
 def get_game_state():
     return get_state()
+
+@app.post("/next_turn")
+def advance_turn():
+    return {"current_turn_id": next_turn()}
 
 class PlayerConfig(BaseModel):
     name: Optional[str] = None

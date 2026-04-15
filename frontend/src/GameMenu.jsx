@@ -1,15 +1,24 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import GameSetup from './GameSetup'
+import nextTurnApi from './api/nextTurn'
 import './GameMenu.css'
 
-function GameMenu({ gameState, onNewGame }) {
+function GameMenu({ gameState, currentTurnId, onNewGame, onNextTurn }) {
   const [open, setOpen] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [showSetup, setShowSetup] = useState(false)
   const navigate = useNavigate()
 
   const players = Object.values(gameState)
+  const currentPlayer = gameState[currentTurnId]
+
+  const handleNextTurn = () => {
+    nextTurnApi().then((data) => {
+      if (data?.current_turn_id) onNextTurn(data.current_turn_id)
+    })
+    setOpen(false)
+  }
 
   const handleNewGameConfirm = () => {
     setShowConfirm(false)
@@ -34,6 +43,17 @@ function GameMenu({ gameState, onNewGame }) {
           <div className='game-menu-sheet' onClick={(e) => e.stopPropagation()}>
             <div className='game-menu-handle' />
 
+            {currentPlayer && (
+              <>
+                <div className='game-menu-section-title'>Current Turn</div>
+                <div className='game-menu-turn-row'>
+                  <span className='game-menu-turn-name'>{currentPlayer.name}</span>
+                  <button className='game-menu-pass-btn' onClick={handleNextTurn}>Pass Turn</button>
+                </div>
+                <div className='game-menu-divider' />
+              </>
+            )}
+
             {players.length > 0 && (
               <>
                 <div className='game-menu-section-title'>Switch to Player</div>
@@ -41,7 +61,7 @@ function GameMenu({ gameState, onNewGame }) {
                   {players.map((p) => (
                     <button
                       key={p.id}
-                      className='game-menu-player-btn'
+                      className={`game-menu-player-btn ${p.id === currentTurnId ? 'active-turn' : ''}`}
                       onClick={() => { navigate(`/player/${p.id}`); setOpen(false) }}
                     >
                       <span className='game-menu-player-name'>{p.name}</span>

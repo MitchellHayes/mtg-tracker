@@ -1,7 +1,7 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useGameState from './hooks/useGameState'
 import GameSetup from './GameSetup'
-import { useState } from 'react'
 import './Home.css'
 
 function Home() {

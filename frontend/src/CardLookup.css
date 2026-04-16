@@ -32,7 +32,12 @@
 }
 
 .cl-sheet.is-searching {
-  height: 60dvh;
+  max-height: 60dvh;
+  height: auto;
+}
+
+.cl-sheet.is-searching .cl-body {
+  flex: 0 0 auto;
 }
 
 /* Search row */
@@ -94,6 +99,8 @@
 .cl-body {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
   padding: 0 16px 8px;
   display: flex;
   flex-direction: column;

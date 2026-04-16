@@ -29,7 +29,10 @@ class ConnectionManager:
         self.active.append(ws)
 
     def disconnect(self, ws: WebSocket):
-        self.active.remove(ws)
+        try:
+            self.active.remove(ws)
+        except ValueError:
+            pass  # already removed by broadcast on a failed send
 
     async def broadcast(self, data: dict):
         message = json.dumps(jsonable_encoder(data))
@@ -37,7 +40,7 @@ class ConnectionManager:
             try:
                 await ws.send_text(message)
             except Exception:
-                self.active.remove(ws)
+                self.disconnect(ws)
 
 manager = ConnectionManager()
 

@@ -27,6 +27,14 @@ Each player tracks their own life on their phone and a TV displays the dashboard
 - Long-press life buttons to change life in increments of 5
 - In-app card lookup — search any Magic card by name and view its art, set, and rarity
 - Real-time sync across all devices via WebSocket (2-second reconnect backoff)
+- **Day/Night state machine** — tracks Innistrad Day/Night cycle; prompted at end of each turn
+- **Monarch token** — crown a player; auto-transfers to the active player when the Monarch is eliminated
+- **Initiative token** — track who holds the Initiative; auto-transfers on elimination
+- **Energy, Rad, and Speed counters** per player (Aetherdrift racing mechanics)
+  - Speed auto-increments once per turn when the active player deals damage to an opponent (capped at 4)
+  - Manual speed adjustments consume the auto-increment for that turn
+- **End-of-turn checklist** — prompted before passing, with per-item Skip support and a Rad life-loss calculator
+- **Elimination handling** — token buttons are disabled for eliminated players; Monarch/Initiative auto-transfer to the active player on death
 
 ---
 
@@ -43,6 +51,11 @@ Interactive docs are available at `/docs` (Swagger UI) when the backend is runni
 | POST | `/commander_damage` | Record commander damage |
 | POST | `/poison` | Update a player's poison counters |
 | POST | `/next_turn` | Advance to the next living player's turn |
+| POST | `/reset` | Clear all game state |
+| POST | `/monarch` | Set or clear the Monarch token |
+| POST | `/initiative` | Set or clear the Initiative token |
+| POST | `/day_night` | Set Day/Night state (`"day"`, `"night"`, or `null`) |
+| POST | `/counter` | Update an energy, rad, or speed counter for a player |
 
 ---
 

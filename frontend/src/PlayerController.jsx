@@ -131,6 +131,221 @@ function FloatingDelta({ deltas }) {
 
 let deltaId = 0
 
+// ── Start-of-Turn checklist ───────────────────────────────────────────────────
+function StartOfTurnModal({ player, hasInitiative, onDismiss, onApplyLife }) {
+  const rad = player.rad ?? 0
+  const speed = player.speed ?? 0
+
+  const items = []
+  if (rad > 0) items.push({
+    key: 'rad', icon: faRadiation, color: '#7ec850',
+    title: `Resolve ${rad} Rad Counter${rad !== 1 ? 's' : ''}`,
+    body: `Mill ${rad} card${rad !== 1 ? 's' : ''} from the top of your library. Lose 1 life for each nonland card milled.`,
+  })
+  if (hasInitiative) items.push({
+    key: 'initiative', icon: faDungeon, color: '#6495ed',
+    title: 'Venture into the Undercity',
+    body: 'You hold the Initiative — venture into the Undercity dungeon at the beginning of your upkeep.',
+  })
+  if (speed > 0) items.push({
+    key: 'speed', icon: faBolt, color: '#e8c840',
+    title: speed >= 4 ? 'Max Speed!' : `Speed ${speed} / 4`,
+    body: speed >= 4
+      ? 'You\'re at max speed — abilities that care about max speed are now active for you.'
+      : `You have ${speed} speed counter${speed !== 1 ? 's' : ''}. Speed increases automatically when you deal damage to opponents.`,
+  })
+
+  const [checked, setChecked] = useState(new Set())
+  const [skipped, setSkipped] = useState(new Set())
+  const [nonlandMilled, setNonlandMilled] = useState(0)
+  const [radBypassed, setRadBypassed] = useState(false)
+
+  if (items.length === 0) return null
+
+  // Rad item is only checkable once the player has either entered a nonland count or
+  // explicitly confirmed no non-lands were milled.
+  const radResolved = rad === 0 || nonlandMilled > 0 || radBypassed
+
+  // Each item must be either checked or skipped to enable "Got it".
+  const allResolved = items.every(({ key }) => checked.has(key) || skipped.has(key))
+
+  const toggle = (key) => {
+    if (key === 'rad' && !radResolved) return
+    setChecked((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  const toggleSkip = (key, e) => {
+    e.stopPropagation()
+    // Skipping the rad item also clears any life-loss calculation.
+    if (key === 'rad') { setNonlandMilled(0); setRadBypassed(false) }
+    setSkipped((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+    // Un-check if skipping, so the two states don't coexist.
+    setChecked((prev) => { const next = new Set(prev); next.delete(key); return next })
+  }
+
+  const handleDismiss = () => {
+    if (nonlandMilled > 0 && !skipped.has('rad')) onApplyLife(-nonlandMilled)
+    onDismiss()
+  }
+
+  return (
+    <div className='turn-modal-overlay'>
+      <div className='turn-modal'>
+        <div className='turn-modal-header'>Start of Turn</div>
+        <div className='turn-modal-items'>
+          {items.map(({ key, icon, color, title, body }) => {
+            const isChecked = checked.has(key)
+            const isSkipped = skipped.has(key)
+            const isLocked = key === 'rad' && !radResolved && !isSkipped
+            return (
+              <div
+                key={key}
+                className={`turn-modal-item ${isChecked ? 'checked' : ''} ${isSkipped ? 'skipped' : ''} ${isLocked ? 'locked' : ''}`}
+                onClick={() => !isSkipped && toggle(key)}
+                role='checkbox'
+                aria-checked={isChecked}
+                aria-disabled={isLocked || isSkipped}
+              >
+                <FontAwesomeIcon icon={icon} className='turn-modal-item-icon' style={{ color }} />
+                <div className='turn-modal-item-text'>
+                  <div className='turn-modal-item-title'>{title}</div>
+                  <div className='turn-modal-item-body'>{body}</div>
+                  {key === 'rad' && (
+                    <div className='turn-modal-rad-helper' onClick={(e) => e.stopPropagation()}>
+                      <span className='turn-modal-rad-label'>Nonland milled:</span>
+                      <div className='turn-modal-rad-controls'>
+                        <button
+                          className='turn-modal-rad-btn'
+                          onClick={() => { setNonlandMilled((n) => Math.max(0, n - 1)); setRadBypassed(false) }}
+                          disabled={nonlandMilled === 0}
+                        >−</button>
+                        <span className='turn-modal-rad-count'>{nonlandMilled}</span>
+                        <button
+                          className='turn-modal-rad-btn'
+                          onClick={() => { setNonlandMilled((n) => Math.min(rad, n + 1)); setRadBypassed(false) }}
+                          disabled={nonlandMilled === rad}
+                        >+</button>
+                      </div>
+                      {nonlandMilled > 0
+                        ? <span className='turn-modal-rad-preview'>−{nonlandMilled} life on confirm</span>
+                        : (
+                          <button
+                            className={`turn-modal-rad-bypass ${radBypassed ? 'confirmed' : ''}`}
+                            onClick={() => setRadBypassed((v) => !v)}
+                          >
+                            {radBypassed ? '✓ All lands' : 'All lands milled'}
+                          </button>
+                        )
+                      }
+                    </div>
+                  )}
+                </div>
+                <div className='turn-modal-item-actions' onClick={(e) => e.stopPropagation()}>
+                  <button
+                    className={`turn-modal-skip-btn ${isSkipped ? 'active' : ''}`}
+                    onClick={(e) => toggleSkip(key, e)}
+                  >
+                    {isSkipped ? 'Undo skip' : 'Skip'}
+                  </button>
+                  <div className={`turn-modal-checkbox ${isChecked ? 'checked' : ''} ${isLocked ? 'locked' : ''} ${isSkipped ? 'skipped' : ''}`}>
+                    {isChecked ? '✓' : isLocked ? '🔒' : isSkipped ? '–' : ''}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+        <button className='turn-modal-btn-primary' disabled={!allResolved} onClick={handleDismiss}>
+          Got it
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── End-of-Turn flow ──────────────────────────────────────────────────────────
+function EndOfTurnModal({ dayNight, isMonarch, onConfirm, onCancel, loading }) {
+  const [spellCount, setSpellCount] = useState(null) // null | 0 | 1 | 2
+  const needsDayNight = dayNight === 'day' || dayNight === 'night'
+  const canConfirm = !needsDayNight || spellCount !== null
+
+  const getNewDayNight = () => {
+    if (!needsDayNight || spellCount === null) return dayNight
+    if (dayNight === 'day' && spellCount === 0) return 'night'
+    if (dayNight === 'night' && spellCount >= 2) return 'day'
+    return dayNight
+  }
+
+  const dnResult = () => {
+    if (spellCount === null) return null
+    const next = getNewDayNight()
+    if (next !== dayNight) return next === 'night' ? '🌙 Becomes Night' : '☀ Becomes Day'
+    return 'No change'
+  }
+
+  return (
+    <div className='turn-modal-overlay'>
+      <div className='turn-modal'>
+        <div className='turn-modal-header'>End of Turn</div>
+
+        {needsDayNight && (
+          <div className='turn-modal-section'>
+            <div className='turn-modal-section-label'>
+              {dayNight === 'day' ? '☀ Day' : '🌙 Night'} is active — spells cast this turn?
+            </div>
+            <div className='turn-modal-spell-btns'>
+              {[0, 1, 2].map((n) => (
+                <button
+                  key={n}
+                  className={`turn-modal-spell-btn ${spellCount === n ? 'active' : ''}`}
+                  onClick={() => setSpellCount(n)}
+                >
+                  {n === 2 ? '2+' : n}
+                </button>
+              ))}
+            </div>
+            {dnResult() && <div className='turn-modal-dn-result'>{dnResult()}</div>}
+          </div>
+        )}
+
+        <div className='turn-modal-reminders'>
+          {isMonarch && (
+            <div className='turn-modal-reminder'>
+              <FontAwesomeIcon icon={faCrown} style={{ color: 'var(--gold)' }} />
+              <span>Draw a card — you are the Monarch.</span>
+            </div>
+          )}
+          <div className='turn-modal-reminder'>
+            <span className='turn-modal-reminder-dot' />
+            <span>Check for any other end-step triggers.</span>
+          </div>
+        </div>
+
+        <div className='turn-modal-footer'>
+          <button className='turn-modal-btn-cancel' disabled={loading} onClick={onCancel}>Cancel</button>
+          <button
+            className='turn-modal-btn-primary'
+            disabled={!canConfirm || loading}
+            onClick={() => onConfirm(getNewDayNight())}
+          >
+            {loading ? 'Passing…' : 'Pass Turn'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function PlayerController() {
   const { id } = useParams()
   const playerId = parseInt(id)
@@ -142,6 +357,10 @@ function PlayerController() {
   const [showPolitics, setShowPolitics] = useState(false)
   const [showWatchlistOverlay, setShowWatchlistOverlay] = useState(false)
   const [showLookup, setShowLookup] = useState(false)
+  const [showStartModal, setShowStartModal] = useState(false)
+  const [showEndModal, setShowEndModal] = useState(false)
+  const [endModalLoading, setEndModalLoading] = useState(false)
+  const prevTurnIdRef = useRef(null)
   const gameMenuRef = useRef(null)
   const [floatDeltas, setFloatDeltas] = useState([])
   const [holdAccum, setHoldAccum] = useState(null)
@@ -264,13 +483,38 @@ function PlayerController() {
     onHoldEnd,
   )
 
+  // Show start-of-turn checklist when this player becomes active
+  useEffect(() => {
+    if (prevTurnIdRef.current === null) {
+      prevTurnIdRef.current = currentTurnId
+      return
+    }
+    if (currentTurnId === playerId && prevTurnIdRef.current !== playerId && player) {
+      const hasChecklist = (player.rad ?? 0) > 0 || hasInitiative || (player.speed ?? 0) > 0
+      if (hasChecklist) setShowStartModal(true)
+    }
+    prevTurnIdRef.current = currentTurnId
+  }, [currentTurnId]) // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!player) return null
 
   const handlePassTurn = () => {
+    setShowEndModal(true)
+  }
+
+  const handleEndTurnConfirm = async (newDayNight) => {
     vibrate(60)
-    nextTurnApi().then((data) => {
+    setEndModalLoading(true)
+    try {
+      if (newDayNight !== dayNight) {
+        await setDayNightApi(newDayNight)
+      }
+      const data = await nextTurnApi()
       if (data?.current_turn_id) setCurrentTurnId(data.current_turn_id)
-    })
+    } finally {
+      setEndModalLoading(false)
+      setShowEndModal(false)
+    }
   }
 
   return (
@@ -417,10 +661,10 @@ function PlayerController() {
                   <span className='pc-module-label'>{dayNight === 'day' ? 'Day' : dayNight === 'night' ? 'Night' : 'Day / Night'}</span>
                 </div>
                 <div className='pc-dn-toggle'>
-                  <button className={`pc-dn-btn ${dayNight === 'day' ? 'active-day' : ''}`} onClick={() => setDayNightApi(dayNight === 'day' ? null : 'day')}>
+                  <button className={`pc-dn-btn ${dayNight === 'day' ? 'active-day' : ''}`} disabled={isEliminated} onClick={() => setDayNightApi(dayNight === 'day' ? null : 'day')}>
                     <FontAwesomeIcon icon={faSun} />
                   </button>
-                  <button className={`pc-dn-btn ${dayNight === 'night' ? 'active-night' : ''}`} onClick={() => setDayNightApi(dayNight === 'night' ? null : 'night')}>
+                  <button className={`pc-dn-btn ${dayNight === 'night' ? 'active-night' : ''}`} disabled={isEliminated} onClick={() => setDayNightApi(dayNight === 'night' ? null : 'night')}>
                     <FontAwesomeIcon icon={faMoon} />
                   </button>
                 </div>
@@ -436,6 +680,7 @@ function PlayerController() {
                 </div>
                 <button
                   className={`pc-claim-btn ${isMonarch ? 'held' : ''}`}
+                  disabled={isEliminated}
                   onClick={() => { setMonarchApi(isMonarch ? null : playerId); vibrate(40) }}
                 >
                   {isMonarch ? 'Release' : 'Claim'}
@@ -451,6 +696,7 @@ function PlayerController() {
                 </div>
                 <button
                   className={`pc-claim-btn ${hasInitiative ? 'held' : ''}`}
+                  disabled={isEliminated}
                   onClick={() => { setInitiativeApi(hasInitiative ? null : playerId); vibrate(40) }}
                 >
                   {hasInitiative ? 'Release' : 'Claim'}
@@ -590,6 +836,25 @@ function PlayerController() {
           <FontAwesomeIcon icon={faBars} />
         </button>
       </div>
+
+      {showStartModal && (
+        <StartOfTurnModal
+          player={player}
+          hasInitiative={hasInitiative}
+          onDismiss={() => setShowStartModal(false)}
+          onApplyLife={(delta) => doLife(delta)}
+        />
+      )}
+
+      {showEndModal && (
+        <EndOfTurnModal
+          dayNight={dayNight}
+          isMonarch={isMonarch}
+          onConfirm={handleEndTurnConfirm}
+          onCancel={() => setShowEndModal(false)}
+          loading={endModalLoading}
+        />
+      )}
 
       <GameMenu
         ref={gameMenuRef}

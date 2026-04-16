@@ -29,11 +29,15 @@ Full-stack app: React SPA frontend + FastAPI backend with real-time WebSocket sy
 ### Data flow
 All game mutations go through a REST endpoint → backend updates in-memory state → broadcasts full game state over WebSocket to all connected clients → frontend `useGameState` hook updates React state.
 
-State persists to `backend/game_state.json` (auto-loaded on startup).
+State persists to `backend/game_state.db` (SQLite, auto-loaded on startup). `INSERT OR REPLACE` on a single row provides atomic writes.
 
 ### Backend (`backend/`)
-- `main.py` — FastAPI app. REST endpoints: `/init`, `/update`, `/commander_damage`, `/poison`, `/next_turn`, `/reset`. WebSocket at `/ws`. Also serves the built frontend as static files.
-- `game_state.py` — In-memory state (player dict, current turn). Pydantic `Player` model. `_save()`/`_load()` for JSON persistence. Call `_save()` after any mutation.
+- `main.py` — FastAPI app. REST endpoints: `/init`, `/update`, `/commander_damage`, `/poison`, `/counter`, `/next_turn`, `/reset`, `/monarch`, `/initiative`, `/day_night`. WebSocket at `/ws`. Also serves the built frontend as static files.
+- `game_state.py` — In-memory state (player dict, current turn, monarch/initiative/day_night). Pydantic `Player` model. `_save()`/`_load()` for SQLite persistence. Call `_save()` after any mutation.
+  - `update_player` auto-transfers Monarch/Initiative to the active player when a player is eliminated (life ≤ 0).
+  - `update_player` auto-increments the active player's speed once per turn when they deal damage to an opponent; gated by `speed_increased_this_turn`.
+  - `update_counter` sets `speed_increased_this_turn = True` on any manual speed increase to prevent double-increment.
+  - `next_turn` resets `speed_increased_this_turn = False` for all players.
 - Scryfall API is called during `/init` to fetch commander art and color identity; rate-limited to one request per 0.5s via `asyncio.sleep`.
 
 ### Frontend (`frontend/src/`)

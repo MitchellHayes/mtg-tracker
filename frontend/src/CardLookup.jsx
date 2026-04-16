@@ -28,7 +28,7 @@ function useAutocomplete(query) {
     debounceRef.current = setTimeout(() => {
       fetch(`https://api.scryfall.com/cards/autocomplete?q=${encodeURIComponent(query)}&include_extras=false`, { headers: SCRYFALL_HEADERS })
         .then((r) => r.ok ? r.json() : null)
-        .then((data) => setSuggestions(data?.data?.slice(0, 8) ?? []))
+        .then((data) => setSuggestions(data?.data?.slice(0, 4) ?? []))
         .catch(() => {})
     }, 100)
     return () => clearTimeout(debounceRef.current)

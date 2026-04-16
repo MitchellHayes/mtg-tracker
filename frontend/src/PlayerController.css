@@ -1,5 +1,5 @@
 .pc-root {
-  height: 100dvh;
+  height: 100svh;
   background: var(--bg-base);
   display: flex;
   flex-direction: column;

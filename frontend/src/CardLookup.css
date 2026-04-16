@@ -1,6 +1,7 @@
 .cl-overlay {
   position: fixed;
   inset: 0;
+  padding-top: calc(env(safe-area-inset-top) + 8px);
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -11,7 +12,7 @@
 
 .cl-sheet {
   width: 100%;
-  max-height: calc(100dvh - env(safe-area-inset-top) - 8px);
+  max-height: 100%;
   background: var(--bg-surface);
   border-radius: 22px 22px 0 0;
   border-top: 1px solid var(--border);
@@ -23,7 +24,7 @@
 }
 
 .cl-sheet.has-card {
-  height: calc(100dvh - env(safe-area-inset-top) - 8px);
+  height: 100%;
   background: linear-gradient(
     160deg,
     rgba(var(--card-tint, '14, 19, 35'), 0.2) 0%,

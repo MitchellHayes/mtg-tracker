@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSkull, faChevronDown, faChevronUp, faMagnifyingGlass, faBars, faCrown, faDungeon, faBolt, faRadiation, faSun, faMoon } from '@fortawesome/free-solid-svg-icons'
 import { useParams } from 'react-router-dom'
@@ -92,6 +92,35 @@ function PlayerController() {
   const hasInitiative = initiativeId === playerId
 
   const vibrate = (ms = 30) => navigator.vibrate?.(ms)
+
+  const prevTurnIdRef = useRef(currentTurnId)
+  useEffect(() => {
+    const prev = prevTurnIdRef.current
+    prevTurnIdRef.current = currentTurnId
+    if (prev !== null && prev !== currentTurnId && currentTurnId === playerId) {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)()
+        const notes = [
+          { freq: 493.88, start: 0,    duration: 0.25 }, // B4, short
+          { freq: 698.46, start: 0.2, duration: 0.8  }, // F5, long
+        ]
+        notes.forEach(({ freq, start, duration }) => {
+          const osc = ctx.createOscillator()
+          const gain = ctx.createGain()
+          osc.connect(gain)
+          gain.connect(ctx.destination)
+          osc.type = 'sine'
+          osc.frequency.value = freq
+          const t = ctx.currentTime + start
+          gain.gain.setValueAtTime(0, t)
+          gain.gain.linearRampToValueAtTime(0.4, t + 0.02)
+          gain.gain.exponentialRampToValueAtTime(0.001, t + duration)
+          osc.start(t)
+          osc.stop(t + duration)
+        })
+      } catch (_) {}
+    }
+  }, [currentTurnId, playerId])
 
   const spawnDelta = (value, side) => {
     const id = ++deltaId

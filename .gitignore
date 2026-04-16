@@ -1,3 +1,7 @@
+# Game state
+backend/game_state.json
+backend/game_state.db
+
 # Python
 __pycache__/
 *.py[cod]

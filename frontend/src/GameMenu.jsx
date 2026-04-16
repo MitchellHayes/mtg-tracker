@@ -6,7 +6,7 @@ import resetGameApi from './api/resetGame'
 import { formatCommander } from './utils/formatCommander'
 import './GameMenu.css'
 
-const GameMenu = forwardRef(function GameMenu({ gameState, currentTurnId, onNewGame, onNextTurn }, ref) {
+const GameMenu = forwardRef(function GameMenu({ gameState, currentTurnId, onNextTurn }, ref) {
   const [open, setOpen] = useState(false)
 
   useImperativeHandle(ref, () => ({ open: () => setOpen(true) }))
@@ -30,10 +30,9 @@ const GameMenu = forwardRef(function GameMenu({ gameState, currentTurnId, onNewG
     setShowSetup(true)
   }
 
-  const handleStart = (newState) => {
+  const handleStart = () => {
     setShowSetup(false)
     setOpen(false)
-    onNewGame(newState)
     navigate('/')
   }
 

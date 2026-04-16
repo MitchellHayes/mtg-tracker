@@ -78,9 +78,9 @@ function useGameState() {
   return {
     gameState, setGameState,
     currentTurnId, setCurrentTurnId,
-    monarchId, setMonarchId,
-    initiativeId, setInitiativeId,
-    dayNight, setDayNight,
+    monarchId,
+    initiativeId,
+    dayNight,
     connected,
   }
 }

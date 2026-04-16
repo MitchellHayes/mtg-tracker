@@ -427,7 +427,6 @@ function PlayerController() {
         ref={gameMenuRef}
         gameState={gameState}
         currentTurnId={currentTurnId}
-        onNewGame={setGameState}
         onNextTurn={setCurrentTurnId}
       />
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { API_URL } from '../config'
 
 function getWsUrl() {
@@ -12,17 +12,30 @@ function getWsUrl() {
 function useGameState() {
   const [gameState, setGameState] = useState({})
   const [currentTurnId, setCurrentTurnId] = useState(null)
+  const [monarchId, setMonarchId] = useState(null)
+  const [initiativeId, setInitiativeId] = useState(null)
+  const [dayNight, setDayNight] = useState(null)
   const [connected, setConnected] = useState(false)
 
-  const applyState = (data) => {
-    setGameState(data.players ?? data)
+  const applyState = useCallback((data) => {
+    if (data.players !== undefined) setGameState(data.players)
     if (data.current_turn_id !== undefined) setCurrentTurnId(data.current_turn_id)
-  }
+    if (data.monarch_id !== undefined) setMonarchId(data.monarch_id)
+    if (data.initiative_id !== undefined) setInitiativeId(data.initiative_id)
+    if (data.day_night !== undefined) setDayNight(data.day_night)
+  }, [])
 
   useEffect(() => {
     let destroyed = false
     let ws
     let reconnectTimer
+
+    function fetchAndApply() {
+      fetch(`${API_URL}/state`)
+        .then((r) => r.json())
+        .then(applyState)
+        .catch(() => {})
+    }
 
     function connect() {
       if (destroyed) return
@@ -30,6 +43,9 @@ function useGameState() {
 
       ws.onopen = () => {
         setConnected(true)
+        // Belt-and-suspenders: fetch REST state on reconnect to catch any
+        // mutations that occurred while disconnected (WS also sends on connect).
+        fetchAndApply()
       }
 
       ws.onmessage = (event) => {
@@ -57,9 +73,16 @@ function useGameState() {
       clearTimeout(reconnectTimer)
       ws?.close()
     }
-  }, [])
+  }, [applyState])
 
-  return { gameState, setGameState, currentTurnId, setCurrentTurnId, connected }
+  return {
+    gameState, setGameState,
+    currentTurnId, setCurrentTurnId,
+    monarchId, setMonarchId,
+    initiativeId, setInitiativeId,
+    dayNight, setDayNight,
+    connected,
+  }
 }
 
 export default useGameState

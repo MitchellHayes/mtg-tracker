@@ -1,50 +1,108 @@
+import sqlite3
 import json
 import os
 from pydantic import BaseModel, Field
 from typing import Optional
 
-STATE_FILE = os.path.join(os.path.dirname(__file__), "game_state.json")
+DB_FILE = os.path.join(os.path.dirname(__file__), "game_state.db")
+# Keep JSON fallback path for one-time migration
+_JSON_FILE = os.path.join(os.path.dirname(__file__), "game_state.json")
 
 class Player(BaseModel):
     id: int = Field(description="1-based player index assigned at game init")
     life: int = Field(description="Current life total")
     name: str = Field(description="Display name")
     colors: list[str] = Field(default=[], description="WUBRG color identity from Scryfall")
-    commander: Optional[str] = Field(default=None, description="Commander card name (exact, from Scryfall)")
-    commander_image: Optional[str] = Field(default=None, description="Scryfall art_crop URL for the commander")
-    partner: Optional[str] = Field(default=None, description="Partner commander card name, if any")
-    partner_image: Optional[str] = Field(default=None, description="Scryfall art_crop URL for the partner")
-    commander_damage: dict[str, int] = Field(
-        default={},
-        description="Commander damage received, keyed by source player ID. Normal damage: '{source_id}', partner damage: '{source_id}_p'",
-    )
-    poison: int = Field(default=0, description="Poison counter total (lethal at 10)")
+    commander: Optional[str] = Field(default=None)
+    commander_image: Optional[str] = Field(default=None)
+    partner: Optional[str] = Field(default=None)
+    partner_image: Optional[str] = Field(default=None)
+    commander_damage: dict[str, int] = Field(default={})
+    poison: int = Field(default=0, description="Poison counters (lethal at 10)")
+    energy: int = Field(default=0, description="Energy counters (⚡)")
+    rad: int = Field(default=0, description="Rad counters — mill at start of main phase")
+    speed: int = Field(default=0, description="Speed counters (Aetherdrift racing mechanic)")
 
 player_health: dict[int, Player] = {}
 current_turn_id: int = 1
+monarch_id: Optional[int] = None    # player who currently holds the Monarch token
+initiative_id: Optional[int] = None # player who currently holds the Initiative
+day_night: Optional[str] = None     # "day" | "night" | None (neither)
+
+# ── SQLite helpers ────────────────────────────────────────────────────────────
+
+def _get_conn() -> sqlite3.Connection:
+    conn = sqlite3.connect(DB_FILE)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS game_state (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            state_json TEXT NOT NULL
+        )
+    """)
+    conn.commit()
+    return conn
 
 def _save():
-    with open(STATE_FILE, "w") as f:
-        json.dump({
-            "players": {k: v.model_dump() for k, v in player_health.items()},
-            "current_turn_id": current_turn_id,
-        }, f)
+    conn = _get_conn()
+    state_json = json.dumps({
+        "players": {k: v.model_dump() for k, v in player_health.items()},
+        "current_turn_id": current_turn_id,
+        "monarch_id": monarch_id,
+        "initiative_id": initiative_id,
+        "day_night": day_night,
+    })
+    conn.execute(
+        "INSERT OR REPLACE INTO game_state (id, state_json) VALUES (1, ?)",
+        (state_json,),
+    )
+    conn.commit()
+    conn.close()
 
 def _load():
-    global current_turn_id
-    if not os.path.exists(STATE_FILE):
-        return
+    global current_turn_id, monarch_id, initiative_id, day_night
+
+    # Migrate from JSON file if DB doesn't exist yet
+    if not os.path.exists(DB_FILE) and os.path.exists(_JSON_FILE):
+        try:
+            with open(_JSON_FILE) as f:
+                data = json.load(f)
+            for k, v in data.get("players", {}).items():
+                player_health[int(k)] = Player(**v)
+            current_turn_id = data.get("current_turn_id", 1)
+            _save()
+            return
+        except Exception:
+            pass
+
     try:
-        with open(STATE_FILE) as f:
-            data = json.load(f)
+        conn = _get_conn()
+        row = conn.execute("SELECT state_json FROM game_state WHERE id = 1").fetchone()
+        conn.close()
+        if not row:
+            return
+        data = json.loads(row[0])
         for k, v in data.get("players", {}).items():
             player_health[int(k)] = Player(**v)
         current_turn_id = data.get("current_turn_id", 1)
+        monarch_id = data.get("monarch_id")
+        initiative_id = data.get("initiative_id")
+        day_night = data.get("day_night")
     except Exception:
-        pass  # corrupt file, start fresh
+        pass  # corrupt state, start fresh
+
+# ── Public API ────────────────────────────────────────────────────────────────
+
+def get_state() -> dict:
+    return {
+        "players": player_health,
+        "current_turn_id": current_turn_id,
+        "monarch_id": monarch_id,
+        "initiative_id": initiative_id,
+        "day_night": day_night,
+    }
 
 def initialize_game(player_configs: list[dict], starting_life: int):
-    global current_turn_id
+    global current_turn_id, monarch_id, initiative_id, day_night
     player_health.clear()
     for i, config in enumerate(player_configs):
         player_id = i + 1
@@ -59,16 +117,19 @@ def initialize_game(player_configs: list[dict], starting_life: int):
             partner_image=config.get("partner_image") or None,
         )
     current_turn_id = 1
+    monarch_id = None
+    initiative_id = None
+    day_night = None
     _save()
 
 def reset_game():
-    global current_turn_id
+    global current_turn_id, monarch_id, initiative_id, day_night
     player_health.clear()
     current_turn_id = 1
+    monarch_id = None
+    initiative_id = None
+    day_night = None
     _save()
-
-def get_state():
-    return {"players": player_health, "current_turn_id": current_turn_id}
 
 def next_turn():
     global current_turn_id
@@ -83,7 +144,7 @@ def next_turn():
     _save()
     return current_turn_id
 
-def update_player(player_id, delta):
+def update_player(player_id: int, delta: int) -> Player:
     try:
         player_health[player_id].life += delta
         _save()
@@ -91,7 +152,7 @@ def update_player(player_id, delta):
     except KeyError:
         raise KeyError(f"Player {player_id} does not exist")
 
-def update_poison(player_id: int, delta: int):
+def update_poison(player_id: int, delta: int) -> Player:
     try:
         player = player_health[player_id]
         player.poison = max(0, player.poison + delta)
@@ -100,15 +161,50 @@ def update_poison(player_id: int, delta: int):
     except KeyError:
         raise KeyError(f"Player {player_id} does not exist")
 
-def update_commander_damage(target_id: int, source_id: int, delta: int, is_partner: bool = False):
+def update_commander_damage(target_id: int, source_id: int, delta: int, is_partner: bool = False) -> Player:
     try:
         player = player_health[target_id]
         key = f"{source_id}_p" if is_partner else str(source_id)
-        current = player.commander_damage.get(key, 0)
-        player.commander_damage[key] = max(0, current + delta)
+        player.commander_damage[key] = max(0, player.commander_damage.get(key, 0) + delta)
         _save()
         return player
     except KeyError:
         raise KeyError(f"Player {target_id} does not exist")
+
+VALID_COUNTERS = {"energy", "rad", "speed"}
+
+MAX_SPEED = 4
+
+def update_counter(player_id: int, counter: str, delta: int) -> Player:
+    if counter not in VALID_COUNTERS:
+        raise ValueError(f"Unknown counter type: {counter}")
+    try:
+        player = player_health[player_id]
+        current = getattr(player, counter)
+        new_value = max(0, current + delta)
+        if counter == "speed":
+            new_value = min(new_value, MAX_SPEED)
+        setattr(player, counter, new_value)
+        _save()
+        return player
+    except KeyError:
+        raise KeyError(f"Player {player_id} does not exist")
+
+def set_monarch(player_id: Optional[int]):
+    global monarch_id
+    monarch_id = player_id
+    _save()
+
+def set_initiative(player_id: Optional[int]):
+    global initiative_id
+    initiative_id = player_id
+    _save()
+
+def set_day_night(state: Optional[str]):
+    global day_night
+    if state not in ("day", "night", None):
+        raise ValueError(f"Invalid day_night value: {state!r}")
+    day_night = state
+    _save()
 
 _load()

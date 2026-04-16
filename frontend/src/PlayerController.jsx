@@ -1,10 +1,14 @@
 import { useState, useRef, useCallback } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSkull, faChevronDown, faChevronUp, faMagnifyingGlass, faBars } from '@fortawesome/free-solid-svg-icons'
+import { faSkull, faChevronDown, faChevronUp, faMagnifyingGlass, faBars, faCrown, faDungeon, faBolt, faRadiation, faSun, faMoon } from '@fortawesome/free-solid-svg-icons'
 import { useParams } from 'react-router-dom'
 import useGameState from './hooks/useGameState'
 import useGameActions from './hooks/useGameActions'
 import nextTurnApi from './api/nextTurn'
+import setMonarchApi from './api/setMonarch'
+import setInitiativeApi from './api/setInitiative'
+import setDayNightApi from './api/setDayNight'
+import updateCounter from './api/updateCounter'
 import GameMenu from './GameMenu'
 import CardLookup from './CardLookup'
 import { formatCommander } from './utils/formatCommander'
@@ -65,9 +69,11 @@ let deltaId = 0
 function PlayerController() {
   const { id } = useParams()
   const playerId = parseInt(id)
-  const { gameState, setGameState, currentTurnId, setCurrentTurnId, connected } = useGameState()
+  const { gameState, setGameState, currentTurnId, setCurrentTurnId, monarchId, initiativeId, dayNight, connected } = useGameState()
   const { handleLife, handleCommanderDamage, handlePoison } = useGameActions(gameState)
-  const [showExtras, setShowExtras] = useState(false)
+  const [showCounters, setShowCounters] = useState(false)
+  const [showTokens, setShowTokens] = useState(false)
+  const [showCmdrDmg, setShowCmdrDmg] = useState(false)
   const [showLookup, setShowLookup] = useState(false)
   const gameMenuRef = useRef(null)
   const [floatDeltas, setFloatDeltas] = useState([])
@@ -82,6 +88,8 @@ function PlayerController() {
 
   const isEliminated = player ? player.life <= 0 : false
   const isMyTurn = currentTurnId === playerId
+  const isMonarch = monarchId === playerId
+  const hasInitiative = initiativeId === playerId
 
   const vibrate = (ms = 30) => navigator.vibrate?.(ms)
 
@@ -164,6 +172,12 @@ function PlayerController() {
         {player.commander && (
           <div className='pc-commander'>{formatCommander(player.commander, player.partner)}</div>
         )}
+        {(isMonarch || hasInitiative) && (
+          <div className='pc-token-badges'>
+            {isMonarch && <span className='pc-token-badge monarch'><FontAwesomeIcon icon={faCrown} /> Monarch</span>}
+            {hasInitiative && <span className='pc-token-badge initiative'><FontAwesomeIcon icon={faDungeon} /> Initiative</span>}
+          </div>
+        )}
       </div>
 
       <div className='pc-life-area'>
@@ -188,13 +202,27 @@ function PlayerController() {
         </div>
       </div>
 
-      <div className='pc-extras-section'>
-          <button className='pc-extras-header' onClick={() => setShowExtras((v) => !v)}>
-            <span>Counters & Damage</span>
-            <FontAwesomeIcon icon={showExtras ? faChevronUp : faChevronDown} />
-          </button>
+      <div className='pc-accordions'>
 
-          {showExtras && (
+        {/* ── Counters ── */}
+        <div className={`pc-accordion ${showCounters ? 'open' : ''}`}>
+          <button className='pc-extras-header' onClick={() => setShowCounters((v) => !v)}>
+            <span>Counters</span>
+            <div className='pc-extras-header-right'>
+              {!showCounters && (() => {
+                const pips = []
+                if ((player.poison ?? 0) > 0) pips.push({ label: '☠', value: player.poison })
+                if ((player.energy ?? 0) > 0) pips.push({ label: '⚡', value: player.energy })
+                if ((player.rad ?? 0) > 0) pips.push({ label: '☢', value: player.rad })
+                if ((player.speed ?? 0) > 0) pips.push({ label: '⚡︎', value: `${player.speed}/4` })
+                return pips.map(({ label, value }) => (
+                  <span key={label} className='pc-extras-summary-pip'>{label} {value}</span>
+                ))
+              })()}
+              <FontAwesomeIcon icon={showCounters ? faChevronUp : faChevronDown} />
+            </div>
+          </button>
+          {showCounters && (
             <div className='pc-extras'>
               <div className='pc-module'>
                 <div className='pc-module-left'>
@@ -209,44 +237,173 @@ function PlayerController() {
                   <button onClick={() => { handlePoison(playerId, 1); vibrate() }}>+</button>
                 </div>
               </div>
-
-              {opponents.length > 0 && (
-                <>
-                  <div className='pc-cmdr-title'>Commander Damage</div>
-                  {opponents.flatMap((source) => {
-                    const rows = []
-                    const commanders = [
-                      { name: source.commander, isPartner: false, key: String(source.id) },
-                      ...(source.partner ? [{ name: source.partner, isPartner: true, key: `${source.id}_p` }] : []),
-                    ]
-                    commanders.forEach(({ name, isPartner, key }) => {
-                      const taken = player.commander_damage?.[key] ?? 0
-                      const lethal = taken >= COMMANDER_DAMAGE_LETHAL
-                      rows.push(
-                        <div key={key} className={`pc-module ${lethal ? 'lethal' : ''}`}>
-                          <div className='pc-module-left'>
-                            <div className='pc-cmdr-info'>
-                              <span className='pc-cmdr-player'>{source.name}</span>
-                              <span className='pc-cmdr-name'>{name}</span>
-                            </div>
-                          </div>
-                          <div className='pc-cmdr-controls'>
-                            <button onClick={() => { handleCommanderDamage(playerId, source.id, -1, isPartner); vibrate() }}>−</button>
-                            <span className={`pc-cmdr-count ${taken >= COMMANDER_DAMAGE_WARNING ? 'warning' : ''} ${lethal ? 'lethal' : ''}`}>
-                              {taken}
-                            </span>
-                            <button onClick={() => { handleCommanderDamage(playerId, source.id, 1, isPartner); vibrate() }}>+</button>
-                          </div>
-                        </div>
-                      )
-                    })
-                    return rows
-                  })}
-                </>
-              )}
+              <div className='pc-module'>
+                <div className='pc-module-left'>
+                  <FontAwesomeIcon icon={faBolt} className='pc-energy-icon' />
+                  <span className='pc-module-label'>Energy</span>
+                </div>
+                <div className='pc-cmdr-controls'>
+                  <button onClick={() => { updateCounter(playerId, 'energy', -1); vibrate() }}>−</button>
+                  <span className='pc-cmdr-count'>{player.energy ?? 0}</span>
+                  <button onClick={() => { updateCounter(playerId, 'energy', 1); vibrate() }}>+</button>
+                </div>
+              </div>
+              <div className='pc-module'>
+                <div className='pc-module-left'>
+                  <FontAwesomeIcon icon={faRadiation} className='pc-rad-icon' />
+                  <div className='pc-cmdr-info'>
+                    <span className='pc-module-label'>Rad</span>
+                    <span className='pc-cmdr-name'>Mill X, lose 1 life per nonland milled</span>
+                  </div>
+                </div>
+                <div className='pc-cmdr-controls'>
+                  <button onClick={() => { updateCounter(playerId, 'rad', -1); vibrate() }}>−</button>
+                  <span className='pc-cmdr-count'>{player.rad ?? 0}</span>
+                  <button onClick={() => { updateCounter(playerId, 'rad', 1); vibrate() }}>+</button>
+                </div>
+              </div>
+              {(() => {
+                const speed = player.speed ?? 0
+                const maxSpeed = speed >= 4
+                return (
+                  <div className={`pc-module ${maxSpeed ? 'max-speed' : ''}`}>
+                    <div className='pc-module-left'>
+                      <span className='pc-speed-icon'>⚡︎</span>
+                      <div className='pc-cmdr-info'>
+                        <span className='pc-module-label'>Speed</span>
+                        {maxSpeed && <span className='pc-cmdr-name pc-max-speed-label'>Max Speed!</span>}
+                      </div>
+                    </div>
+                    <div className='pc-cmdr-controls'>
+                      <button onClick={() => { updateCounter(playerId, 'speed', -1); vibrate() }}>−</button>
+                      <span className={`pc-cmdr-count ${maxSpeed ? 'max-speed-count' : ''}`}>{speed}</span>
+                      <button disabled={maxSpeed} onClick={() => { updateCounter(playerId, 'speed', 1); vibrate() }}>+</button>
+                    </div>
+                  </div>
+                )
+              })()}
             </div>
           )}
         </div>
+
+        {/* ── Tokens ── */}
+        <div className={`pc-accordion ${showTokens ? 'open' : ''}`}>
+          <button className='pc-extras-header' onClick={() => setShowTokens((v) => !v)}>
+            <span>Tokens</span>
+            <div className='pc-extras-header-right'>
+              {!showTokens && (
+                <>
+                  {dayNight === 'day' && <span className='pc-extras-summary-pip'>☀ Day</span>}
+                  {dayNight === 'night' && <span className='pc-extras-summary-pip'>🌙 Night</span>}
+                  {isMonarch && <span className='pc-extras-summary-pip monarch-pip'>👑 Monarch</span>}
+                  {hasInitiative && <span className='pc-extras-summary-pip initiative-pip'>⚔ Initiative</span>}
+                </>
+              )}
+              <FontAwesomeIcon icon={showTokens ? faChevronUp : faChevronDown} />
+            </div>
+          </button>
+          {showTokens && (
+            <div className='pc-extras'>
+              {/* Day / Night */}
+              <div className='pc-module'>
+                <div className='pc-module-left'>
+                  <FontAwesomeIcon icon={dayNight === 'night' ? faMoon : faSun} className={`pc-token-icon ${dayNight ? 'active' : ''}`} style={dayNight === 'night' ? { color: '#9b8ec4' } : dayNight === 'day' ? { color: '#f5c842' } : {}} />
+                  <span className='pc-module-label'>{dayNight === 'day' ? 'Day' : dayNight === 'night' ? 'Night' : 'Day / Night'}</span>
+                </div>
+                <div className='pc-dn-toggle'>
+                  <button className={`pc-dn-btn ${dayNight === 'day' ? 'active-day' : ''}`} onClick={() => setDayNightApi(dayNight === 'day' ? null : 'day')}>
+                    <FontAwesomeIcon icon={faSun} />
+                  </button>
+                  <button className={`pc-dn-btn ${dayNight === 'night' ? 'active-night' : ''}`} onClick={() => setDayNightApi(dayNight === 'night' ? null : 'night')}>
+                    <FontAwesomeIcon icon={faMoon} />
+                  </button>
+                </div>
+              </div>
+
+              <div className='pc-module'>
+                <div className='pc-module-left'>
+                  <FontAwesomeIcon icon={faCrown} className={`pc-token-icon ${isMonarch ? 'active' : ''}`} />
+                  <div className='pc-cmdr-info'>
+                    <span className='pc-module-label'>Monarch</span>
+                    <span className='pc-cmdr-name'>Draw a card at end of your turn</span>
+                  </div>
+                </div>
+                <button
+                  className={`pc-claim-btn ${isMonarch ? 'held' : ''}`}
+                  onClick={() => { setMonarchApi(isMonarch ? null : playerId); vibrate(40) }}
+                >
+                  {isMonarch ? 'Release' : 'Claim'}
+                </button>
+              </div>
+              <div className='pc-module'>
+                <div className='pc-module-left'>
+                  <FontAwesomeIcon icon={faDungeon} className={`pc-token-icon ${hasInitiative ? 'active' : ''}`} />
+                  <div className='pc-cmdr-info'>
+                    <span className='pc-module-label'>Initiative</span>
+                    <span className='pc-cmdr-name'>Venture into Undercity each upkeep</span>
+                  </div>
+                </div>
+                <button
+                  className={`pc-claim-btn ${hasInitiative ? 'held' : ''}`}
+                  onClick={() => { setInitiativeApi(hasInitiative ? null : playerId); vibrate(40) }}
+                >
+                  {hasInitiative ? 'Release' : 'Claim'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── Commander Damage ── */}
+        {opponents.length > 0 && (
+          <div className={`pc-accordion ${showCmdrDmg ? 'open' : ''}`}>
+            <button className='pc-extras-header' onClick={() => setShowCmdrDmg((v) => !v)}>
+              <span>Commander Damage</span>
+              <div className='pc-extras-header-right'>
+                {!showCmdrDmg && (() => {
+                  const total = Object.values(player.commander_damage ?? {}).reduce((a, b) => a + b, 0)
+                  return total > 0 ? <span className='pc-extras-summary-pip'>⚔ {total}</span> : null
+                })()}
+                <FontAwesomeIcon icon={showCmdrDmg ? faChevronUp : faChevronDown} />
+              </div>
+            </button>
+            {showCmdrDmg && (
+              <div className='pc-extras'>
+                {opponents.flatMap((source) => {
+                  const rows = []
+                  const commanders = [
+                    { name: source.commander, isPartner: false, key: String(source.id) },
+                    ...(source.partner ? [{ name: source.partner, isPartner: true, key: `${source.id}_p` }] : []),
+                  ]
+                  commanders.forEach(({ name, isPartner, key }) => {
+                    const taken = player.commander_damage?.[key] ?? 0
+                    const lethal = taken >= COMMANDER_DAMAGE_LETHAL
+                    rows.push(
+                      <div key={key} className={`pc-module ${lethal ? 'lethal' : ''}`}>
+                        <div className='pc-module-left'>
+                          <div className='pc-cmdr-info'>
+                            <span className='pc-cmdr-player'>{source.name}</span>
+                            <span className='pc-cmdr-name'>{name}</span>
+                          </div>
+                        </div>
+                        <div className='pc-cmdr-controls'>
+                          <button onClick={() => { handleCommanderDamage(playerId, source.id, -1, isPartner); vibrate() }}>−</button>
+                          <span className={`pc-cmdr-count ${taken >= COMMANDER_DAMAGE_WARNING ? 'warning' : ''} ${lethal ? 'lethal' : ''}`}>
+                            {taken}
+                          </span>
+                          <button onClick={() => { handleCommanderDamage(playerId, source.id, 1, isPartner); vibrate() }}>+</button>
+                        </div>
+                      </div>
+                    )
+                  })
+                  return rows
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+      </div>
 
       <div className='pc-toolbar'>
         <button className='pc-toolbar-icon' onClick={() => setShowLookup(true)} aria-label='Card lookup'>

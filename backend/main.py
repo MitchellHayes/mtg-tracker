@@ -8,7 +8,12 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from typing import Optional
 import httpx
-from game_state import initialize_game, reset_game, get_state, update_player, update_poison, update_commander_damage, next_turn, Player
+from game_state import (
+    initialize_game, reset_game, get_state,
+    update_player, update_poison, update_commander_damage, next_turn,
+    update_counter, set_monarch, set_initiative, set_day_night,
+    Player, VALID_COUNTERS,
+)
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(redoc_url=None)
@@ -121,6 +126,9 @@ async def websocket_endpoint(ws: WebSocket):
 class GameState(BaseModel):
     players: dict[int, Player]
     current_turn_id: int = Field(description="Player ID whose turn it currently is")
+    monarch_id: Optional[int] = Field(default=None, description="Player ID who holds the Monarch token, or null")
+    initiative_id: Optional[int] = Field(default=None, description="Player ID who holds the Initiative, or null")
+    day_night: Optional[str] = Field(default=None, description="'day', 'night', or null (neither)")
 
 class NextTurnResponse(BaseModel):
     current_turn_id: int = Field(description="Player ID whose turn it now is")
@@ -218,6 +226,72 @@ async def update_commander_damage_endpoint(request: CommanderDamageRequest):
         return state["players"][request.target_id]
     except KeyError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+class CounterRequest(BaseModel):
+    player_id: int = Field(description="ID of the player to update")
+    counter: str = Field(description=f"Counter type: one of {sorted(VALID_COUNTERS)}")
+    delta: int = Field(description="Amount to add (negative to decrease, floored at 0)")
+
+@app.post("/counter", response_model=Player)
+async def update_counter_endpoint(request: CounterRequest):
+    """Update an energy, rad, or speed counter for a player."""
+    try:
+        update_counter(request.player_id, request.counter, request.delta)
+        state = get_state()
+        await manager.broadcast(state)
+        return state["players"][request.player_id]
+    except (KeyError, ValueError) as e:
+        raise HTTPException(status_code=404 if isinstance(e, KeyError) else 400, detail=str(e))
+
+class MonarchRequest(BaseModel):
+    player_id: Optional[int] = Field(default=None, description="Player ID to crown as Monarch, or null to clear")
+
+@app.post("/monarch", response_model=GameState)
+async def set_monarch_endpoint(request: MonarchRequest):
+    """
+    Crown a player as the Monarch, or clear the token (player_id=null).
+    Rules: Monarch draws an extra card at end of their turn. If a creature deals combat
+    damage to the Monarch, that player becomes the new Monarch.
+    """
+    set_monarch(request.player_id)
+    state = get_state()
+    await manager.broadcast(state)
+    return state
+
+class InitiativeRequest(BaseModel):
+    player_id: Optional[int] = Field(default=None, description="Player ID who takes the Initiative, or null to clear")
+
+@app.post("/initiative", response_model=GameState)
+async def set_initiative_endpoint(request: InitiativeRequest):
+    """
+    Set the Initiative holder, or clear it (player_id=null).
+    Rules: Taking the Initiative causes you to venture into the Undercity dungeon.
+    At the beginning of your upkeep, venture again if you still hold the Initiative.
+    If a creature deals combat damage to you while you hold it, your attacker takes the Initiative.
+    """
+    set_initiative(request.player_id)
+    state = get_state()
+    await manager.broadcast(state)
+    return state
+
+class DayNightRequest(BaseModel):
+    state: Optional[str] = Field(default=None, description="'day', 'night', or null to clear")
+
+@app.post("/day_night", response_model=GameState)
+async def set_day_night_endpoint(request: DayNightRequest):
+    """
+    Set the Day/Night state for Innistrad mechanics.
+    Rules: Day→Night if the active player cast no spells during their last turn.
+    Night→Day if the active player cast 2+ spells during their last turn.
+    Daybound permanents transform at dusk; Nightbound permanents transform at dawn.
+    """
+    try:
+        set_day_night(request.state)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    state = get_state()
+    await manager.broadcast(state)
+    return state
 
 # Serve built frontend — must come after all API routes
 DIST = Path(__file__).parent.parent / "frontend" / "dist"

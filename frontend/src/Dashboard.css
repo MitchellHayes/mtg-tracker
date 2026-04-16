@@ -38,6 +38,92 @@
   margin: 0;
 }
 
+/* Game status bar — Monarch, Initiative, Day/Night */
+.dashboard-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.dash-status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: clamp(0.6rem, 1.1vw, 0.78rem);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.dash-status-chip.monarch {
+  background: rgba(201, 162, 39, 0.12);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+}
+
+.dash-status-chip.initiative {
+  background: rgba(100, 149, 237, 0.12);
+  border: 1px solid #6495ed;
+  color: #6495ed;
+}
+
+.dash-status-chip.day-night {
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.dash-status-chip.day-night.day {
+  border: 1px solid #f5c842;
+  color: #f5c842;
+}
+
+.dash-status-chip.day-night.night {
+  border: 1px solid #9b8ec4;
+  color: #9b8ec4;
+}
+
+.dash-status-chip.day-night:hover { opacity: 0.85; }
+
+/* Token badges on player cards */
+.card-token-badges {
+  position: absolute;
+  top: 44px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 3;
+}
+
+.card-token-badge {
+  width: clamp(22px, 3vw, 32px);
+  height: clamp(22px, 3vw, 32px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(0.6rem, 1.2vw, 0.85rem);
+}
+
+.card-token-badge.monarch {
+  background: rgba(201, 162, 39, 0.25);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+}
+
+.card-token-badge.initiative {
+  background: rgba(100, 149, 237, 0.25);
+  border: 1px solid #6495ed;
+  color: #6495ed;
+}
+
 .dashboard h1 {
   text-align: center;
   font-family: var(--font-display);
@@ -236,9 +322,71 @@
 
 .cmdr-dmg-pip.warning { color: #e0a030; }
 
+.speed-max-pip {
+  font-size: clamp(0.58rem, 1.1vw, 0.8rem);
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(232, 200, 64, 0.2);
+  border: 1px solid rgba(232, 200, 64, 0.5);
+  color: #e8c840;
+  white-space: nowrap;
+}
+
 .cmdr-dmg-pip.lethal {
   color: var(--crimson-bright);
   background: rgba(192, 50, 63, 0.3);
+}
+
+.dashboard .grid-container:has(.player-card.winner) {
+  justify-items: center;
+}
+
+.dashboard .player-card.winner {
+  max-width: 420px;
+  width: 100%;
+  border-color: var(--gold);
+  box-shadow:
+    0 0 0 1px var(--gold),
+    0 0 60px rgba(201, 162, 39, 0.35),
+    0 0 120px rgba(201, 162, 39, 0.15);
+  animation: winner-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes winner-pulse {
+  0%, 100% { box-shadow: 0 0 0 1px var(--gold), 0 0 60px rgba(201, 162, 39, 0.35), 0 0 120px rgba(201, 162, 39, 0.15); }
+  50%       { box-shadow: 0 0 0 1px var(--gold), 0 0 80px rgba(201, 162, 39, 0.55), 0 0 160px rgba(201, 162, 39, 0.25); }
+}
+
+.winner-banner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: clamp(4px, 0.8vh, 8px) 0;
+  background: var(--gold);
+  font-size: clamp(0.55rem, 1.2vw, 0.8rem);
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  font-family: var(--font-ui);
+  color: #07080c;
+  text-align: center;
+  text-transform: uppercase;
+  z-index: 2;
+  animation: winner-banner-glow 2.5s ease-in-out infinite;
+}
+
+@keyframes winner-banner-glow {
+  0%, 100% { background: var(--gold); }
+  50%       { background: var(--gold-bright, #e8c84a); }
+}
+
+.dashboard .player-card.winner .life-total {
+  color: var(--gold);
+  text-shadow:
+    0 0 30px rgba(201, 162, 39, 0.6),
+    0 0 6px rgba(0,0,0,0.9),
+    0 2px 4px rgba(0,0,0,0.8);
 }
 
 .life-total {

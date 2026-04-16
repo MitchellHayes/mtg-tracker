@@ -210,16 +210,60 @@
   100% { opacity: 0; transform: translateX(-50%) translateY(-64px); }
 }
 
-/* Extras section */
-.pc-extras-section {
+/* Accordions container */
+.pc-accordions {
   width: 100%;
   max-width: 440px;
   padding: 0 16px;
   box-sizing: border-box;
   margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   overflow-y: auto;
-  flex: 1;
+  /* Grows to fill space only when something is open */
+  flex: 0 1 auto;
   min-height: 0;
+}
+
+.pc-accordions:has(.pc-accordion.open) {
+  flex: 1;
+}
+
+.pc-accordion {
+  display: flex;
+  flex-direction: column;
+}
+
+.pc-extras-header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.pc-extras-summary-pip {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-body);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 7px;
+  letter-spacing: 0.03em;
+  font-family: var(--font-ui);
+}
+
+.pc-extras-summary-pip.monarch-pip {
+  color: var(--gold);
+  border-color: var(--gold);
+  background: rgba(201, 162, 39, 0.1);
+}
+
+.pc-extras-summary-pip.initiative-pip {
+  color: #6495ed;
+  border-color: #6495ed;
+  background: rgba(100, 149, 237, 0.1);
 }
 
 .pc-extras-header {
@@ -317,9 +361,6 @@
   font-weight: 400;
   font-style: italic;
   color: var(--text-body);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .pc-cmdr-controls {
@@ -361,6 +402,125 @@
 .pc-cmdr-count.warning { color: #e0a030; }
 .pc-cmdr-count.lethal  { color: var(--crimson-bright); }
 .pc-cmdr-count.lethal-poison { color: #4caf50; }
+
+/* Token badges in header */
+.pc-token-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.pc-token-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.pc-token-badge.monarch {
+  background: rgba(201, 162, 39, 0.15);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+}
+
+.pc-token-badge.initiative {
+  background: rgba(100, 149, 237, 0.15);
+  border: 1px solid #6495ed;
+  color: #6495ed;
+}
+
+/* Counter icons */
+.pc-energy-icon { color: #e8c840; font-size: 1rem; }
+.pc-rad-icon    { color: #7ec850; font-size: 1rem; }
+.pc-speed-icon  { font-size: 0.9rem; color: var(--text-body); font-style: normal; }
+
+.pc-module.max-speed {
+  border-color: #e8c840;
+  background: rgba(232, 200, 64, 0.06);
+}
+
+.pc-max-speed-label {
+  color: #e8c840 !important;
+  font-style: normal !important;
+  font-weight: 700 !important;
+  font-size: 0.7rem !important;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.pc-cmdr-count.max-speed-count { color: #e8c840; }
+
+.pc-token-icon { font-size: 1rem; color: var(--text-muted); }
+.pc-token-icon.active.fa-crown   { color: var(--gold); }
+.pc-token-icon.active.fa-dungeon { color: #6495ed; }
+
+/* Day/Night toggle */
+.pc-dn-toggle {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.pc-dn-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s, border-color 0.1s, color 0.1s, transform 0.08s;
+}
+
+.pc-dn-btn:active { transform: scale(0.92); }
+
+.pc-dn-btn.active-day {
+  background: rgba(245, 200, 66, 0.12);
+  border-color: #f5c842;
+  color: #f5c842;
+}
+
+.pc-dn-btn.active-night {
+  background: rgba(155, 142, 196, 0.12);
+  border-color: #9b8ec4;
+  color: #9b8ec4;
+}
+
+/* Claim button */
+.pc-claim-btn {
+  padding: 8px 14px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: var(--font-ui);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
+  color: var(--text-body);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.1s, color 0.1s, border-color 0.1s, transform 0.08s;
+}
+
+.pc-claim-btn:active { transform: scale(0.93); }
+
+.pc-claim-btn.held {
+  background: rgba(201, 162, 39, 0.15);
+  border-color: var(--gold);
+  color: var(--gold);
+}
 
 /* Toolbar */
 .pc-toolbar {

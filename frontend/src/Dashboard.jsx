@@ -1,6 +1,7 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSkull } from '@fortawesome/free-solid-svg-icons'
+import { faSkull, faCrown, faDungeon, faSun, faMoon } from '@fortawesome/free-solid-svg-icons'
 import useGameState from './hooks/useGameState'
+import setDayNightApi from './api/setDayNight'
 import { formatCommander } from './utils/formatCommander'
 import { COMMANDER_DAMAGE_WARNING, COMMANDER_DAMAGE_LETHAL, POISON_WARNING, POISON_LETHAL } from './constants'
 import QRWidget from './QRWidget'
@@ -37,7 +38,7 @@ function CommanderDamagePips({ player, allPlayers }) {
   )
 }
 
-function PlayerCard({ player, allPlayers, isActiveTurn, lastAlone }) {
+function PlayerCard({ player, allPlayers, isActiveTurn, lastAlone, isWinner }) {
   const isEliminated = player.life <= 0
   const hasSplitArt = player.commander_image && player.partner_image
   const singleArt = !hasSplitArt && (player.commander_image || player.partner_image)
@@ -64,7 +65,7 @@ function PlayerCard({ player, allPlayers, isActiveTurn, lastAlone }) {
   if (lastAlone) cardStyle.gridColumn = '1 / -1'
 
   return (
-    <div className={`player-card ${isEliminated ? 'eliminated' : ''} ${isActiveTurn ? 'active-turn' : ''} ${lastAlone ? 'last-alone' : ''}`} style={cardStyle}>
+    <div className={`player-card ${isEliminated ? 'eliminated' : ''} ${isActiveTurn && !isWinner ? 'active-turn' : ''} ${lastAlone ? 'last-alone' : ''} ${isWinner ? 'winner' : ''}`} style={cardStyle}>
       {hasSplitArt && (
         <div className='card-art-split'>
           <div className='card-art-crossfade-a' style={{ backgroundImage: `url(${player.commander_image})` }} />
@@ -72,7 +73,8 @@ function PlayerCard({ player, allPlayers, isActiveTurn, lastAlone }) {
           <div className='card-art-overlay' style={{ background: overlayStyle }} />
         </div>
       )}
-      {isActiveTurn && !isEliminated && <div className='active-turn-banner'>ACTIVE TURN</div>}
+      {isWinner && <div className='winner-banner'>WINNER</div>}
+      {!isWinner && isActiveTurn && !isEliminated && <div className='active-turn-banner'>ACTIVE TURN</div>}
       {isEliminated && <div className='eliminated-banner'>ELIMINATED</div>}
       <div className='card-content'>
         <h2>{player.name}</h2>
@@ -85,18 +87,56 @@ function PlayerCard({ player, allPlayers, isActiveTurn, lastAlone }) {
             <FontAwesomeIcon icon={faSkull} /> {player.poison}
           </span>
         )}
+        {(player.speed ?? 0) >= 4 && (
+          <span className='speed-max-pip'>⚡︎ Max Speed</span>
+        )}
         <CommanderDamagePips player={player} allPlayers={allPlayers} />
       </div>
     </div>
   )
 }
 
+function GameStatusBar({ monarchId, initiativeId, dayNight, allPlayers }) {
+  const monarch = allPlayers[monarchId]
+  const initiative = allPlayers[initiativeId]
+
+  const cycleDayNight = () => {
+    const next = dayNight === null ? 'day' : dayNight === 'day' ? 'night' : null
+    setDayNightApi(next)
+  }
+
+  if (!monarch && !initiative && !dayNight) return null
+
+  return (
+    <div className='dashboard-status-bar'>
+      {monarch && (
+        <span className='dash-status-chip monarch'>
+          <FontAwesomeIcon icon={faCrown} /> {monarch.name}
+        </span>
+      )}
+      {initiative && (
+        <span className='dash-status-chip initiative'>
+          <FontAwesomeIcon icon={faDungeon} /> {initiative.name}
+        </span>
+      )}
+      {dayNight && (
+        <button className={`dash-status-chip day-night ${dayNight}`} onClick={cycleDayNight} title='Click to cycle Day/Night'>
+          <FontAwesomeIcon icon={dayNight === 'day' ? faSun : faMoon} />
+          {dayNight === 'day' ? ' Day' : ' Night'}
+        </button>
+      )}
+    </div>
+  )
+}
+
 function Dashboard() {
-  const { gameState, currentTurnId } = useGameState()
+  const { gameState, currentTurnId, monarchId, initiativeId, dayNight } = useGameState()
 
   const players = Object.values(gameState)
   const n = players.length
-  const cols = n === 3 ? 3 : n <= 2 ? n : n <= 6 ? 2 : 4
+  const alivePlayers = players.filter((p) => p.life > 0)
+  const winner = n > 1 && alivePlayers.length === 1 ? alivePlayers[0] : null
+  const cols = winner ? 1 : n === 3 ? 3 : n <= 2 ? n : n <= 6 ? 2 : 4
   // When n is odd and > 3, the last card will be alone in its row — center it
   const lastAlone = n > 3 && n % 2 !== 0
 
@@ -116,14 +156,16 @@ function Dashboard() {
   return (
     <div className='dashboard'>
       <h1>MTG Life Tracker</h1>
+      <GameStatusBar monarchId={monarchId} initiativeId={initiativeId} dayNight={dayNight} allPlayers={gameState} />
       <div className='grid-container' style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
-        {players.map((player, i) => (
+        {(winner ? [winner] : players).map((player, i) => (
           <PlayerCard
             key={player.id}
             player={player}
             allPlayers={gameState}
             isActiveTurn={player.id === currentTurnId}
-            lastAlone={lastAlone && i === players.length - 1}
+            lastAlone={!winner && lastAlone && i === players.length - 1}
+            isWinner={winner?.id === player.id}
           />
         ))}
       </div>

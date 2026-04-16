@@ -1,0 +1,22 @@
+.qr-widget {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.qr-code-box {
+  padding: 5px;
+  background: #fff;
+  border-radius: 6px;
+  line-height: 0;
+}
+
+.qr-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  margin: 0;
+}

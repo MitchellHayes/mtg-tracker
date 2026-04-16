@@ -78,6 +78,7 @@ function PlayerController() {
 
   const player = gameState[playerId]
   const opponents = Object.values(gameState).filter((p) => p.id !== playerId && p.commander)
+  const currentTurnPlayer = gameState[currentTurnId]
 
   const isEliminated = player ? player.life <= 0 : false
   const isMyTurn = currentTurnId === playerId
@@ -252,8 +253,12 @@ function PlayerController() {
           <FontAwesomeIcon icon={faMagnifyingGlass} />
         </button>
         <div className='pc-toolbar-center'>
-          {isMyTurn && !isEliminated && (
+          {isMyTurn && !isEliminated ? (
             <button className='pc-pass-turn-btn' onClick={handlePassTurn}>Pass Turn</button>
+          ) : (
+            currentTurnPlayer && !isMyTurn && (
+              <span className='pc-whos-turn'>{currentTurnPlayer.name}'s turn</span>
+            )
           )}
         </div>
         <button className='pc-toolbar-icon' onClick={() => gameMenuRef.current?.open()} aria-label='Menu'>

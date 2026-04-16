@@ -3,6 +3,7 @@ import { faSkull } from '@fortawesome/free-solid-svg-icons'
 import useGameState from './hooks/useGameState'
 import { formatCommander } from './utils/formatCommander'
 import { COMMANDER_DAMAGE_WARNING, COMMANDER_DAMAGE_LETHAL, POISON_WARNING, POISON_LETHAL } from './constants'
+import QRWidget from './QRWidget'
 import './Dashboard.css'
 
 const COLOR_MAP = {
@@ -98,6 +99,19 @@ function Dashboard() {
   const cols = n === 3 ? 3 : n <= 2 ? n : n <= 6 ? 2 : 4
   // When n is odd and > 3, the last card will be alone in its row — center it
   const lastAlone = n > 3 && n % 2 !== 0
+
+  if (n === 0) {
+    return (
+      <div className='dashboard dashboard-empty'>
+        <h1>MTG Life Tracker</h1>
+        <div className='dashboard-empty-state'>
+          <p className='dashboard-empty-title'>Awaiting Game</p>
+          <p className='dashboard-empty-sub'>Start a game on your device to begin tracking.</p>
+        </div>
+        <div className='dashboard-qr-overlay'><QRWidget size={88} /></div>
+      </div>
+    )
+  }
 
   return (
     <div className='dashboard'>

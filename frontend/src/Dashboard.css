@@ -9,6 +9,35 @@
   gap: 12px;
 }
 
+.dashboard-empty {
+  justify-content: center;
+  align-items: center;
+}
+
+.dashboard-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-empty-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 4vw, 3rem);
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  margin: 0;
+}
+
+.dashboard-empty-sub {
+  font-size: clamp(0.8rem, 1.6vw, 1.1rem);
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  opacity: 0.6;
+  margin: 0;
+}
+
 .dashboard h1 {
   text-align: center;
   font-family: var(--font-display);
@@ -26,6 +55,19 @@
   gap: 12px;
   flex: 1;
   min-height: 0;
+}
+
+.dashboard-qr-overlay {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 10;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.dashboard-qr-overlay:hover {
+  opacity: 1;
 }
 
 .dashboard .player-card.last-alone {

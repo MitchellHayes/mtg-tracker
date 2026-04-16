@@ -1,0 +1,16 @@
+# Dependencies
+frontend/node_modules/
+.venv/
+backend/__pycache__/
+**/__pycache__/
+**/*.pyc
+
+# Build output
+frontend/dist/
+
+# Runtime state
+backend/game_state.json
+
+# Misc
+.git/
+*.log

@@ -427,3 +427,11 @@
   background: var(--gold-bright);
   box-shadow: 0 2px 12px rgba(201, 162, 39, 0.2);
 }
+
+.pc-whos-turn {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}

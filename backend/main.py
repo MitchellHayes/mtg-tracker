@@ -41,8 +41,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-initialize_game([{}, {}], 40)
-
 SCRYFALL_NAMED = "https://api.scryfall.com/cards/named"
 SCRYFALL_RATE_LIMIT = 0.5  # seconds between /cards/named calls
 

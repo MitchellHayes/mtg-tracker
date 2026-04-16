@@ -2,7 +2,7 @@
 
 A real-time, multi-device life tracker for Magic: The Gathering Commander.
 
-Each player tracks their own life on their phone, a tablet runs the full controller, and a TV displays the dashboard — all synced through a shared Python backend.
+Each player tracks their own life on their phone and a TV displays the dashboard — all synced through a shared Python backend via WebSocket.
 
 ---
 
@@ -12,7 +12,6 @@ Each player tracks their own life on their phone, a tablet runs the full control
 |---|---|
 | `/` | Home — pick your player or start a new game |
 | `/player/:id` | Mobile controller for a single player |
-| `/controller` | Full tablet controller for all players |
 | `/dashboard` | Read-only TV display |
 
 ---
@@ -27,14 +26,17 @@ Each player tracks their own life on their phone, a tablet runs the full control
 - Turn order tracking with active turn indicator across all views
 - Long-press life buttons to change life in increments of 5
 - In-app card lookup — search any Magic card by name and view its art, set, and rarity
-- Real-time sync across all devices via 1-second polling
+- Real-time sync across all devices via WebSocket (2-second reconnect backoff)
 
 ---
 
 ## API
 
+Interactive docs are available at `/docs` (Swagger UI) when the backend is running.
+
 | Method | Route | Description |
 |---|---|---|
+| WS | `/ws` | WebSocket — broadcasts full game state to all clients on any change |
 | GET | `/state` | Returns full game state |
 | POST | `/init` | Start a new game |
 | POST | `/update` | Update a player's life total |

@@ -66,7 +66,7 @@ function PlayerController() {
   const { id } = useParams()
   const playerId = parseInt(id)
   const { gameState, setGameState, currentTurnId, setCurrentTurnId } = useGameState()
-  const { handleLife, handleCommanderDamage, handlePoison } = useGameActions(gameState, setGameState)
+  const { handleLife, handleCommanderDamage, handlePoison } = useGameActions(gameState)
   const [showExtras, setShowExtras] = useState(false)
   const [showLookup, setShowLookup] = useState(false)
   const gameMenuRef = useRef(null)

@@ -2,11 +2,9 @@ import updatePlayer from '../api/updatePlayer'
 import updateCommanderDamage from '../api/updateCommanderDamage'
 import updatePoison from '../api/updatePoison'
 
-export default function useGameActions(gameState, setGameState) {
+export default function useGameActions(gameState) {
   const handleLife = (playerId, delta) => {
-    const player = gameState[playerId]
-    if (!player) return
-    setGameState({ ...gameState, [playerId]: { ...player, life: player.life + delta } })
+    if (!gameState[playerId]) return
     updatePlayer(playerId, delta)
   }
 
@@ -20,10 +18,6 @@ export default function useGameActions(gameState, setGameState) {
     const actualDelta = next - current
     const newLife = next >= 21 && target.life > 0 ? 0 : target.life - actualDelta
     const lifeApiDelta = newLife - target.life
-    setGameState({
-      ...gameState,
-      [targetId]: { ...target, life: newLife, commander_damage: { ...currentDamage, [key]: next } }
-    })
     updateCommanderDamage(targetId, sourceId, delta, isPartner)
     if (lifeApiDelta !== 0) updatePlayer(targetId, lifeApiDelta)
   }
@@ -35,7 +29,6 @@ export default function useGameActions(gameState, setGameState) {
     const next = Math.max(0, current + delta)
     const newLife = next >= 10 && player.life > 0 ? 0 : player.life
     const lifeApiDelta = newLife - player.life
-    setGameState({ ...gameState, [playerId]: { ...player, poison: next, life: newLife } })
     updatePoison(playerId, delta)
     if (lifeApiDelta !== 0) updatePlayer(playerId, lifeApiDelta)
   }

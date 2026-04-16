@@ -1,22 +1,21 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faTv, faGamepad } from '@fortawesome/free-solid-svg-icons'
+import { faTv } from '@fortawesome/free-solid-svg-icons'
 import useGameState from './hooks/useGameState'
 import GameSetup from './GameSetup'
 import { formatCommander } from './utils/formatCommander'
 import './Home.css'
 
 function Home() {
-  const { gameState, setGameState } = useGameState()
+  const { gameState } = useGameState()
   const [showSetup, setShowSetup] = useState(false)
   const navigate = useNavigate()
 
   const players = Object.values(gameState)
   const gameInProgress = players.length > 0
 
-  const handleStart = (newState) => {
-    setGameState(newState)
+  const handleStart = () => {
     setShowSetup(false)
   }
 
@@ -46,15 +45,10 @@ function Home() {
             ))}
           </div>
 
-          <div className='home-section-title'>Shared Views</div>
           <div className='home-actions'>
             <button className='home-action-btn' onClick={() => navigate('/dashboard')}>
               <FontAwesomeIcon icon={faTv} className='home-action-icon' />
               Dashboard
-            </button>
-            <button className='home-action-btn' onClick={() => navigate('/controller')}>
-              <FontAwesomeIcon icon={faGamepad} className='home-action-icon' />
-              Full Controller
             </button>
           </div>
 

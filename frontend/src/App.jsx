@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Home from './Home'
-import Controller from './Controller'
 import Dashboard from './Dashboard'
 import PlayerController from './PlayerController'
 
@@ -9,7 +8,6 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/controller" element={<Controller />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/player/:id" element={<PlayerController />} />
       </Routes>

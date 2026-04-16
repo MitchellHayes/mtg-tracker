@@ -123,7 +123,7 @@ function PlayerSetupCard({ index, player, onChange, onRemove, canRemove }) {
       <div className='setup-divider' />
 
       <div className='setup-section'>
-        <label>Choose Commander</label>
+        <label>Commander</label>
         <CommanderInput
           value={player.commander}
           onChange={(val) => onChange({ ...player, commander: val })}
@@ -197,7 +197,7 @@ function GameSetup({ onStart }) {
         if (!res.ok) throw new Error(`Server error: ${res.status}`)
         return res.json()
       })
-      .then((data) => onStart(data))
+      .then(() => onStart())
       .catch((err) => {
         console.error('Error initializing game:', err)
         setError('Failed to start game. Is the backend running?')
@@ -224,39 +224,28 @@ function GameSetup({ onStart }) {
       <form className='game-setup' onSubmit={handleSubmit}>
         <div className='setup-top-bar'>
           <h1>New Game</h1>
-          <div className='global-settings'>
-            <div className='life-control'>
-              <span className='life-control-label'>Starting Life</span>
-              <div className='life-presets'>
-                {LIFE_PRESETS.map((v) => (
-                  <button
-                    key={v}
-                    type='button'
-                    className={`life-preset-btn ${startingLife === v && !isCustomLife ? 'active' : ''}`}
-                    onClick={() => handleLifePreset(v)}
-                  >
-                    {v}
-                  </button>
-                ))}
-                <input
-                  className={`life-custom-input ${isCustomLife ? 'active' : ''}`}
-                  type='number'
-                  min={1}
-                  placeholder='Custom'
-                  value={customLife}
-                  onChange={handleCustomLife}
-                  onFocus={() => setCustomLife(isCustomLife ? String(startingLife) : '')}
-                />
-              </div>
-            </div>
-            {error && <span className='setup-error'>{error}</span>}
-            <div className='start-btn-wrap'>
-              <button type='submit' className='start-btn' disabled={loading || !canStart}>
-                {loading ? 'Starting…' : 'Start Game'}
-              </button>
-              {!canStart && (
-                <span className='start-hint'>Add at least 2 players and choose commanders</span>
-              )}
+          <div className='life-control'>
+            <span className='life-control-label'>Starting Life</span>
+            <div className='life-presets'>
+              {LIFE_PRESETS.map((v) => (
+                <button
+                  key={v}
+                  type='button'
+                  className={`life-preset-btn ${startingLife === v && !isCustomLife ? 'active' : ''}`}
+                  onClick={() => handleLifePreset(v)}
+                >
+                  {v}
+                </button>
+              ))}
+              <input
+                className={`life-custom-input ${isCustomLife ? 'active' : ''}`}
+                type='number'
+                min={1}
+                placeholder='Custom'
+                value={customLife}
+                onChange={handleCustomLife}
+                onFocus={() => setCustomLife(isCustomLife ? String(startingLife) : '')}
+              />
             </div>
           </div>
         </div>
@@ -278,6 +267,16 @@ function GameSetup({ onStart }) {
               <span>Add Player</span>
             </button>
           )}
+        </div>
+
+        <div className='setup-footer'>
+          {error && <span className='setup-error'>{error}</span>}
+          {!canStart && (
+            <span className='start-hint'>Add at least 2 players and choose commanders</span>
+          )}
+          <button type='submit' className='start-btn' disabled={loading || !canStart}>
+            {loading ? 'Starting…' : 'Start Game'}
+          </button>
         </div>
       </form>
     </div>

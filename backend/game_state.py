@@ -1,21 +1,24 @@
 import json
 import os
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 
 STATE_FILE = os.path.join(os.path.dirname(__file__), "game_state.json")
 
 class Player(BaseModel):
-    id: int
-    life: int
-    name: str
-    colors: list[str] = []
-    commander: Optional[str] = None
-    commander_image: Optional[str] = None
-    partner: Optional[str] = None
-    partner_image: Optional[str] = None
-    commander_damage: dict[str, int] = {}  # "{player_id}" or "{player_id}_p" -> damage taken
-    poison: int = 0
+    id: int = Field(description="1-based player index assigned at game init")
+    life: int = Field(description="Current life total")
+    name: str = Field(description="Display name")
+    colors: list[str] = Field(default=[], description="WUBRG color identity from Scryfall")
+    commander: Optional[str] = Field(default=None, description="Commander card name (exact, from Scryfall)")
+    commander_image: Optional[str] = Field(default=None, description="Scryfall art_crop URL for the commander")
+    partner: Optional[str] = Field(default=None, description="Partner commander card name, if any")
+    partner_image: Optional[str] = Field(default=None, description="Scryfall art_crop URL for the partner")
+    commander_damage: dict[str, int] = Field(
+        default={},
+        description="Commander damage received, keyed by source player ID. Normal damage: '{source_id}', partner damage: '{source_id}_p'",
+    )
+    poison: int = Field(default=0, description="Poison counter total (lethal at 10)")
 
 player_health: dict[int, Player] = {}
 current_turn_id: int = 1

@@ -1,6 +1,14 @@
 import { useState, useEffect } from 'react'
 import { API_URL } from '../config'
 
+function getWsUrl() {
+  if (API_URL) {
+    return API_URL.replace(/^http/, 'ws') + '/ws'
+  }
+  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  return `${proto}//${window.location.host}/ws`
+}
+
 function useGameState() {
   const [gameState, setGameState] = useState({})
   const [currentTurnId, setCurrentTurnId] = useState(null)
@@ -11,16 +19,38 @@ function useGameState() {
   }
 
   useEffect(() => {
-    const fetchState = () => {
-      fetch(`${API_URL}/state`)
-        .then((res) => res.json())
-        .then(applyState)
-        .catch((err) => console.error('Error fetching game state:', err))
+    let destroyed = false
+    let ws
+    let reconnectTimer
+
+    function connect() {
+      if (destroyed) return
+      ws = new WebSocket(getWsUrl())
+
+      ws.onmessage = (event) => {
+        try {
+          applyState(JSON.parse(event.data))
+        } catch (err) {
+          console.error('WS parse error:', err)
+        }
+      }
+
+      ws.onclose = () => {
+        if (!destroyed) reconnectTimer = setTimeout(connect, 2000)
+      }
+
+      ws.onerror = () => {
+        ws.close()
+      }
     }
 
-    fetchState()
-    const interval = setInterval(fetchState, 1000)
-    return () => clearInterval(interval)
+    connect()
+
+    return () => {
+      destroyed = true
+      clearTimeout(reconnectTimer)
+      ws?.close()
+    }
   }, [])
 
   return { gameState, setGameState, currentTurnId, setCurrentTurnId }

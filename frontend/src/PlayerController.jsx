@@ -93,13 +93,29 @@ function PlayerController() {
 
   const vibrate = (ms = 30) => navigator.vibrate?.(ms)
 
+  const audioCtxRef = useRef(null)
+  const getAudioCtx = () => {
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)()
+    }
+    if (audioCtxRef.current.state === 'suspended') {
+      audioCtxRef.current.resume()
+    }
+    return audioCtxRef.current
+  }
+  useEffect(() => {
+    const unlock = () => getAudioCtx()
+    window.addEventListener('pointerdown', unlock, { once: true })
+    return () => window.removeEventListener('pointerdown', unlock)
+  }, [])
+
   const prevTurnIdRef = useRef(currentTurnId)
   useEffect(() => {
     const prev = prevTurnIdRef.current
     prevTurnIdRef.current = currentTurnId
     if (prev !== null && prev !== currentTurnId && currentTurnId === playerId) {
       try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)()
+        const ctx = getAudioCtx()
         const notes = [
           { freq: 493.88, start: 0,    duration: 0.25 }, // B4, short
           { freq: 698.46, start: 0.2, duration: 0.8  }, // F5, long

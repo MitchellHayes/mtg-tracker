@@ -206,5 +206,26 @@
 
 .home-start-btn:active {
   background: var(--gold-bright);
-  transform: scale(0.97);
+  transform: var(--scale-press);
+}
+
+@media (hover: hover) {
+  .home-player-btn:hover {
+    border-color: var(--gold-border);
+    background: var(--bg-raised);
+  }
+
+  .home-action-btn:hover {
+    border-color: var(--gold-border);
+    color: var(--gold);
+  }
+
+  .home-new-game-btn:hover {
+    color: var(--text-body);
+  }
+
+  .home-start-btn:hover {
+    background: var(--gold-bright);
+    box-shadow: 0 4px 28px rgba(201, 162, 39, 0.4);
+  }
 }

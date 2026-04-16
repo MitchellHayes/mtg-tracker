@@ -8,11 +8,11 @@ import QRWidget from './QRWidget'
 import './Dashboard.css'
 
 const COLOR_MAP = {
-  W: '#f5f0e8',
-  U: '#4a90d9',
-  B: '#9966cc',
-  R: '#e05c3a',
-  G: '#3a9e5f',
+  W: 'var(--mana-w)',
+  U: 'var(--mana-u)',
+  B: 'var(--mana-b)',
+  R: 'var(--mana-r)',
+  G: 'var(--mana-g)',
 }
 
 function CommanderDamagePips({ player, allPlayers }) {
@@ -27,18 +27,48 @@ function CommanderDamagePips({ player, allPlayers }) {
     .filter(({ source, dmg }) => source && dmg > 0)
   if (entries.length === 0) return null
 
+  const pips = entries.map(({ source, commanderName, dmg }) => (
+    <span key={`${source.id}-${commanderName}`} className={`cmdr-dmg-pip ${dmg >= COMMANDER_DAMAGE_LETHAL ? 'lethal' : dmg >= COMMANDER_DAMAGE_WARNING ? 'warning' : ''}`}>
+      {commanderName} {dmg}
+    </span>
+  ))
+
+  if (entries.length >= 3) {
+    const dupPips = entries.map(({ source, commanderName, dmg }) => (
+      <span key={`dup-${source.id}-${commanderName}`} className={`cmdr-dmg-pip ${dmg >= COMMANDER_DAMAGE_LETHAL ? 'lethal' : dmg >= COMMANDER_DAMAGE_WARNING ? 'warning' : ''}`}>
+        {commanderName} {dmg}
+      </span>
+    ))
+    return (
+      <div className='cmdr-dmg-section'>
+        <span className='cmdr-dmg-label'>Commander Damage</span>
+        <div className='cmdr-dmg-ticker'>
+          <div className='cmdr-dmg-ticker-inner'>
+            {pips}
+            <span className='cmdr-dmg-sep' aria-hidden='true'>·</span>
+            {dupPips}
+            <span className='cmdr-dmg-sep' aria-hidden='true'>·</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className='cmdr-dmg-pips'>
-      {entries.map(({ source, commanderName, dmg }) => (
-        <span key={`${source.id}-${commanderName}`} className={`cmdr-dmg-pip ${dmg >= COMMANDER_DAMAGE_LETHAL ? 'lethal' : dmg >= COMMANDER_DAMAGE_WARNING ? 'warning' : ''}`}>
-          {commanderName} {dmg}
-        </span>
-      ))}
+    <div className='cmdr-dmg-section'>
+      <span className='cmdr-dmg-label'>Commander Damage</span>
+      <div className='cmdr-dmg-pips'>{pips}</div>
     </div>
   )
 }
 
-function PlayerCard({ player, allPlayers, isActiveTurn, lastAlone, isWinner }) {
+function lifeClass(life) {
+  if (life <= 5)  return 'life-critical'
+  if (life <= 15) return 'life-low'
+  return ''
+}
+
+function PlayerCard({ player, allPlayers, isActiveTurn, lastAlone, isWinner, isMonarch }) {
   const isEliminated = player.life <= 0
   const hasSplitArt = player.commander_image && player.partner_image
   const singleArt = !hasSplitArt && (player.commander_image || player.partner_image)
@@ -77,11 +107,12 @@ function PlayerCard({ player, allPlayers, isActiveTurn, lastAlone, isWinner }) {
       {!isWinner && isActiveTurn && !isEliminated && <div className='active-turn-banner'>ACTIVE TURN</div>}
       {isEliminated && <div className='eliminated-banner'>ELIMINATED</div>}
       <div className='card-content'>
+        {isMonarch && <FontAwesomeIcon icon={faCrown} className='monarch-crown' />}
         <h2>{player.name}</h2>
         {commanderNames && (
           <p className='commander-name'>{commanderNames}</p>
         )}
-        <p className='life-total'>{player.life}</p>
+        <p className={`life-total ${lifeClass(player.life)}`}>{player.life}</p>
         {(player.poison ?? 0) > 0 && (
           <span className={`poison-pip ${player.poison >= POISON_LETHAL ? 'lethal' : player.poison >= POISON_WARNING ? 'warning' : ''}`}>
             <FontAwesomeIcon icon={faSkull} /> {player.poison}
@@ -96,8 +127,7 @@ function PlayerCard({ player, allPlayers, isActiveTurn, lastAlone, isWinner }) {
   )
 }
 
-function GameStatusBar({ monarchId, initiativeId, dayNight, allPlayers }) {
-  const monarch = allPlayers[monarchId]
+function GameStatusBar({ initiativeId, dayNight, allPlayers }) {
   const initiative = allPlayers[initiativeId]
 
   const cycleDayNight = () => {
@@ -105,15 +135,10 @@ function GameStatusBar({ monarchId, initiativeId, dayNight, allPlayers }) {
     setDayNightApi(next)
   }
 
-  if (!monarch && !initiative && !dayNight) return null
+  if (!initiative && !dayNight) return null
 
   return (
     <div className='dashboard-status-bar'>
-      {monarch && (
-        <span className='dash-status-chip monarch'>
-          <FontAwesomeIcon icon={faCrown} /> {monarch.name}
-        </span>
-      )}
       {initiative && (
         <span className='dash-status-chip initiative'>
           <FontAwesomeIcon icon={faDungeon} /> {initiative.name}
@@ -155,8 +180,7 @@ function Dashboard() {
 
   return (
     <div className='dashboard'>
-      <h1>MTG Life Tracker</h1>
-      <GameStatusBar monarchId={monarchId} initiativeId={initiativeId} dayNight={dayNight} allPlayers={gameState} />
+      <GameStatusBar initiativeId={initiativeId} dayNight={dayNight} allPlayers={gameState} />
       <div className='grid-container' style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
         {(winner ? [winner] : players).map((player, i) => (
           <PlayerCard
@@ -166,6 +190,7 @@ function Dashboard() {
             isActiveTurn={player.id === currentTurnId}
             lastAlone={!winner && lastAlone && i === players.length - 1}
             isWinner={winner?.id === player.id}
+            isMonarch={player.id === monarchId}
           />
         ))}
       </div>

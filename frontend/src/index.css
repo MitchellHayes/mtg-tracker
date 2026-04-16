@@ -25,6 +25,30 @@
   --text-muted:   #474f66;
   --border:       rgba(255, 255, 255, 0.065);
 
+  --day:   #f5c842;
+  --night: #9b8ec4;
+
+  --initiative:        #6495ed;
+  --initiative-dim:    rgba(100, 149, 237, 0.12);
+  --initiative-border: rgba(100, 149, 237, 0.35);
+
+  --energy: #e8c840;
+  --rad:    #7ec850;
+
+  --mana-w: #f5f0e8;
+  --mana-u: #4a90d9;
+  --mana-b: #9966cc;
+  --mana-r: #e05c3a;
+  --mana-g: #3a9e5f;
+
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-pill: 999px;
+
+  --scale-press:      scale(0.96);
+  --scale-press-hard: scale(0.93);
+
   --font-display: 'Cinzel', 'Georgia', serif;
   --font-ui:      'Outfit', system-ui, sans-serif;
 

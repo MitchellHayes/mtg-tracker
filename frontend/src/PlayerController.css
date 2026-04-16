@@ -172,7 +172,7 @@
 }
 
 .pc-btn:active {
-  transform: scale(0.94);
+  transform: var(--scale-press-hard);
   opacity: 0.9;
 }
 
@@ -261,9 +261,9 @@
 }
 
 .pc-extras-summary-pip.initiative-pip {
-  color: #6495ed;
-  border-color: #6495ed;
-  background: rgba(100, 149, 237, 0.1);
+  color: var(--initiative);
+  border-color: var(--initiative);
+  background: var(--initiative-dim);
 }
 
 .pc-extras-header {
@@ -275,7 +275,7 @@
   background: transparent;
   border: 1px solid var(--border);
   border-radius: 12px;
-  color: var(--text-muted);
+  color: var(--text-body);
   font-size: 0.8rem;
   font-weight: 600;
   font-family: var(--font-ui);
@@ -387,7 +387,7 @@
 .pc-cmdr-controls button:active {
   background: var(--crimson);
   border-color: transparent;
-  transform: scale(0.92);
+  transform: var(--scale-press-hard);
 }
 
 .pc-cmdr-count {
@@ -401,7 +401,7 @@
 
 .pc-cmdr-count.warning { color: #e0a030; }
 .pc-cmdr-count.lethal  { color: var(--crimson-bright); }
-.pc-cmdr-count.lethal-poison { color: #4caf50; }
+.pc-cmdr-count.lethal-poison { color: var(--crimson-bright); }
 
 /* Token badges in header */
 .pc-token-badges {
@@ -431,35 +431,35 @@
 }
 
 .pc-token-badge.initiative {
-  background: rgba(100, 149, 237, 0.15);
-  border: 1px solid #6495ed;
-  color: #6495ed;
+  background: var(--initiative-dim);
+  border: 1px solid var(--initiative);
+  color: var(--initiative);
 }
 
 /* Counter icons */
-.pc-energy-icon { color: #e8c840; font-size: 1rem; }
-.pc-rad-icon    { color: #7ec850; font-size: 1rem; }
+.pc-energy-icon { color: var(--energy); font-size: 1rem; }
+.pc-rad-icon    { color: var(--rad);    font-size: 1rem; }
 .pc-speed-icon  { font-size: 0.9rem; color: var(--text-body); font-style: normal; }
 
 .pc-module.max-speed {
-  border-color: #e8c840;
+  border-color: var(--energy);
   background: rgba(232, 200, 64, 0.06);
 }
 
-.pc-max-speed-label {
-  color: #e8c840 !important;
-  font-style: normal !important;
-  font-weight: 700 !important;
-  font-size: 0.7rem !important;
+.pc-module .pc-max-speed-label {
+  color: var(--energy);
+  font-style: normal;
+  font-weight: 700;
+  font-size: 0.7rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
-.pc-cmdr-count.max-speed-count { color: #e8c840; }
+.pc-cmdr-count.max-speed-count { color: var(--energy); }
 
 .pc-token-icon { font-size: 1rem; color: var(--text-muted); }
 .pc-token-icon.active.fa-crown   { color: var(--gold); }
-.pc-token-icon.active.fa-dungeon { color: #6495ed; }
+.pc-token-icon.active.fa-dungeon { color: var(--initiative); }
 
 /* Day/Night toggle */
 .pc-dn-toggle {
@@ -483,18 +483,18 @@
   transition: background 0.1s, border-color 0.1s, color 0.1s, transform 0.08s;
 }
 
-.pc-dn-btn:active { transform: scale(0.92); }
+.pc-dn-btn:active { transform: var(--scale-press-hard); }
 
 .pc-dn-btn.active-day {
   background: rgba(245, 200, 66, 0.12);
-  border-color: #f5c842;
-  color: #f5c842;
+  border-color: var(--day);
+  color: var(--day);
 }
 
 .pc-dn-btn.active-night {
   background: rgba(155, 142, 196, 0.12);
-  border-color: #9b8ec4;
-  color: #9b8ec4;
+  border-color: var(--night);
+  color: var(--night);
 }
 
 /* Claim button */
@@ -514,7 +514,7 @@
   transition: background 0.1s, color 0.1s, border-color 0.1s, transform 0.08s;
 }
 
-.pc-claim-btn:active { transform: scale(0.93); }
+.pc-claim-btn:active { transform: var(--scale-press-hard); }
 
 .pc-claim-btn.held {
   background: rgba(201, 162, 39, 0.15);
@@ -553,7 +553,7 @@
 }
 
 .pc-toolbar-icon:active {
-  transform: scale(0.92);
+  transform: var(--scale-press-hard);
   color: var(--text-bright);
   border-color: rgba(255,255,255,0.15);
 }
@@ -583,9 +583,31 @@
 }
 
 .pc-pass-turn-btn:active {
-  transform: scale(0.97);
+  transform: var(--scale-press);
   background: var(--gold-bright);
   box-shadow: 0 2px 12px rgba(201, 162, 39, 0.2);
+}
+
+@media (hover: hover) {
+  .pc-extras-header:hover {
+    color: var(--text-bright);
+    border-color: rgba(255,255,255,0.12);
+  }
+
+  .pc-toolbar-icon:hover {
+    color: var(--text-body);
+    border-color: rgba(255,255,255,0.12);
+  }
+
+  .pc-pass-turn-btn:hover {
+    background: var(--gold-bright);
+    box-shadow: 0 4px 24px rgba(201, 162, 39, 0.4);
+  }
+
+  .pc-claim-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-bright);
+  }
 }
 
 .pc-whos-turn {

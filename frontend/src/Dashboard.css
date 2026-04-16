@@ -14,6 +14,17 @@
   align-items: center;
 }
 
+.dashboard-empty h1 {
+  text-align: center;
+  font-family: var(--font-display);
+  color: var(--text-muted);
+  margin: 0 0 8px;
+  font-size: clamp(1rem, 2vw, 1.4rem);
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
 .dashboard-empty-state {
   display: flex;
   flex-direction: column;
@@ -52,25 +63,19 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: clamp(0.6rem, 1.1vw, 0.78rem);
+  font-size: clamp(0.75rem, 1.3vw, 1.1rem);
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding: 4px 12px;
+  padding: clamp(4px, 0.6vh, 8px) clamp(12px, 1.2vw, 20px);
   border-radius: 999px;
   white-space: nowrap;
 }
 
-.dash-status-chip.monarch {
-  background: rgba(201, 162, 39, 0.12);
-  border: 1px solid var(--gold);
-  color: var(--gold);
-}
-
 .dash-status-chip.initiative {
-  background: rgba(100, 149, 237, 0.12);
-  border: 1px solid #6495ed;
-  color: #6495ed;
+  background: var(--initiative-dim);
+  border: 1px solid var(--initiative);
+  color: var(--initiative);
 }
 
 .dash-status-chip.day-night {
@@ -80,61 +85,18 @@
 }
 
 .dash-status-chip.day-night.day {
-  border: 1px solid #f5c842;
-  color: #f5c842;
+  border: 1px solid var(--day);
+  color: var(--day);
 }
 
 .dash-status-chip.day-night.night {
-  border: 1px solid #9b8ec4;
-  color: #9b8ec4;
+  border: 1px solid var(--night);
+  color: var(--night);
 }
 
 .dash-status-chip.day-night:hover { opacity: 0.85; }
 
-/* Token badges on player cards */
-.card-token-badges {
-  position: absolute;
-  top: 44px;
-  right: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  z-index: 3;
-}
 
-.card-token-badge {
-  width: clamp(22px, 3vw, 32px);
-  height: clamp(22px, 3vw, 32px);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: clamp(0.6rem, 1.2vw, 0.85rem);
-}
-
-.card-token-badge.monarch {
-  background: rgba(201, 162, 39, 0.25);
-  border: 1px solid var(--gold);
-  color: var(--gold);
-}
-
-.card-token-badge.initiative {
-  background: rgba(100, 149, 237, 0.25);
-  border: 1px solid #6495ed;
-  color: #6495ed;
-}
-
-.dashboard h1 {
-  text-align: center;
-  font-family: var(--font-display);
-  color: var(--text-muted);
-  margin: 0;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  flex-shrink: 0;
-}
 
 .dashboard .grid-container {
   display: grid;
@@ -175,25 +137,25 @@
 }
 
 .dashboard .player-card.active-turn {
-  border-color: var(--gold-border);
-  box-shadow: 0 0 0 1px var(--gold-border), 0 0 40px rgba(201, 162, 39, 0.18);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px var(--gold), 0 0 60px rgba(201, 162, 39, 0.4), 0 0 120px rgba(201, 162, 39, 0.15);
 }
 
 .active-turn-banner {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  padding: clamp(4px, 0.8vh, 8px) 0;
+  padding: clamp(4px, 0.6vh, 7px) clamp(10px, 1.2vw, 18px);
   background: var(--gold);
-  font-size: clamp(0.55rem, 1.2vw, 0.8rem);
+  font-size: clamp(0.7rem, 1.4vw, 1.1rem);
   font-weight: 800;
   letter-spacing: 0.2em;
   font-family: var(--font-ui);
   color: #07080c;
-  text-align: center;
   text-transform: uppercase;
+  border-radius: 0 0 10px 0;
   z-index: 2;
+  white-space: nowrap;
 }
 
 .dashboard .player-card.eliminated {
@@ -259,11 +221,21 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  padding: 14px 18px 18px;
+  padding: clamp(12px, 1.5vh, 20px) clamp(14px, 1.5vw, 22px) clamp(18px, 2.5vh, 28px);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.3) 70%, transparent 100%);
+  border-radius: 0 0 15px 15px;
+}
+
+.monarch-crown {
+  color: var(--gold);
+  font-size: clamp(2.2rem, 3.8vw, 3.2rem);
+  display: block;
+  margin-bottom: 2px;
+  filter: drop-shadow(0 0 8px rgba(201, 162, 39, 0.8));
 }
 
 .dashboard .player-card h2 {
@@ -277,7 +249,7 @@
 }
 
 .commander-name {
-  font-size: clamp(0.65rem, 1.4vw, 1rem);
+  font-size: clamp(0.8rem, 1.6vw, 1.3rem);
   color: rgba(255,255,255,0.75);
   margin: 0;
   text-shadow: 0 0 4px rgba(0,0,0,0.8);
@@ -285,7 +257,7 @@
 }
 
 .poison-pip {
-  font-size: clamp(0.6rem, 1.1vw, 0.82rem);
+  font-size: clamp(0.75rem, 1.3vw, 1.1rem);
   font-weight: 700;
   padding: 2px 10px;
   border-radius: 20px;
@@ -301,16 +273,32 @@
   background: rgba(192, 50, 63, 0.3);
 }
 
+.cmdr-dmg-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.cmdr-dmg-label {
+  font-size: clamp(0.55rem, 0.9vw, 0.72rem);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
 .cmdr-dmg-pips {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
   justify-content: center;
-  margin-top: 4px;
 }
 
 .cmdr-dmg-pip {
-  font-size: clamp(0.58rem, 1.1vw, 0.8rem);
+  font-size: clamp(0.75rem, 1.3vw, 1.1rem);
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 20px;
@@ -323,7 +311,7 @@
 .cmdr-dmg-pip.warning { color: #e0a030; }
 
 .speed-max-pip {
-  font-size: clamp(0.58rem, 1.1vw, 0.8rem);
+  font-size: clamp(0.75rem, 1.3vw, 1.1rem);
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 20px;
@@ -336,6 +324,34 @@
 .cmdr-dmg-pip.lethal {
   color: var(--crimson-bright);
   background: rgba(192, 50, 63, 0.3);
+}
+
+.cmdr-dmg-ticker {
+  width: 100%;
+  overflow: hidden;
+  margin-top: 4px;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+}
+
+.cmdr-dmg-ticker-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: max-content;
+  animation: cmdr-ticker 12s linear infinite;
+}
+
+.cmdr-dmg-sep {
+  color: var(--text-muted);
+  font-size: 1.2em;
+  padding: 0 6px;
+  flex-shrink: 0;
+}
+
+@keyframes cmdr-ticker {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
 .dashboard .grid-container:has(.player-card.winner) {
@@ -365,7 +381,7 @@
   right: 0;
   padding: clamp(4px, 0.8vh, 8px) 0;
   background: var(--gold);
-  font-size: clamp(0.55rem, 1.2vw, 0.8rem);
+  font-size: clamp(0.7rem, 1.4vw, 1.1rem);
   font-weight: 800;
   letter-spacing: 0.3em;
   font-family: var(--font-ui);
@@ -398,8 +414,33 @@
   line-height: 1;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
+  transition: color 0.6s, text-shadow 0.6s;
   text-shadow:
     0 0 30px rgba(192, 50, 63, 0.4),
     0 0 6px rgba(0,0,0,0.9),
     0 2px 4px rgba(0,0,0,0.8);
+}
+
+.life-total.life-low {
+  color: #e0a030;
+  text-shadow:
+    0 0 30px rgba(224, 160, 48, 0.5),
+    0 0 6px rgba(0,0,0,0.9),
+    0 2px 4px rgba(0,0,0,0.8);
+}
+
+.life-total.life-critical {
+  color: #fff;
+  animation: life-critical-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes life-critical-pulse {
+  0%, 100% {
+    color: #fff;
+    text-shadow: 0 0 20px rgba(192, 50, 63, 0.8), 0 0 6px rgba(0,0,0,0.9);
+  }
+  50% {
+    color: var(--crimson-bright);
+    text-shadow: 0 0 40px rgba(192, 50, 63, 1), 0 0 6px rgba(0,0,0,0.9);
+  }
 }

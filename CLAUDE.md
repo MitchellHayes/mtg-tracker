@@ -34,6 +34,10 @@ State persists to `backend/game_state.db` (SQLite, `INSERT OR REPLACE` on a sing
 ### Backend (`backend/`)
 - `main.py` — FastAPI app. REST endpoints listed below. WebSocket at `/ws`. Also serves the built frontend as static files.
 - `game_state.py` — In-memory state: `player_health` dict, `current_turn_id`, `monarch_id`, `initiative_id`, `day_night`, `turn_started_at`. Pydantic `Player` model. Single module-level SQLite connection (`_conn`). Call `_save()` after any mutation.
+  - `update_player` auto-transfers Monarch/Initiative to the active player when a player is eliminated (life ≤ 0).
+  - `update_player` auto-increments the active player's speed once per turn when they deal damage to an opponent; gated by `speed_increased_this_turn`.
+  - `update_counter` sets `speed_increased_this_turn = True` on any manual speed increase to prevent double-increment.
+  - `next_turn` resets `speed_increased_this_turn = False` for all players.
 - Scryfall API called during `/init`; rate-limited to one call per 0.5s.
 
 **REST endpoints:**

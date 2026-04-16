@@ -31,6 +31,10 @@ Each player tracks their own life on their phone and a TV displays the dashboard
 - In-app card lookup — search any Magic card by name and view its art, set, and rarity
 - Real-time sync across all devices via WebSocket (2-second reconnect backoff)
 - Game state persists across server restarts (SQLite)
+- Speed auto-increments once per turn when the active player deals damage to an opponent; manual adjustments consume the auto-increment for that turn
+- Start-of-turn checklist for rad/initiative/speed upkeep, with per-item Skip support and a Rad life-loss calculator
+- End-of-turn prompt for Day/Night transitions and Monarch draw before passing the turn
+- Elimination handling — token buttons are disabled for eliminated players; Monarch/Initiative auto-transfer to the active player on death
 
 ---
 

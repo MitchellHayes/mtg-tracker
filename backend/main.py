@@ -36,7 +36,7 @@ class ConnectionManager:
             try:
                 await ws.send_text(message)
             except Exception:
-                self.active.remove(ws)
+                self.disconnect(ws)
 
 manager = ConnectionManager()
 

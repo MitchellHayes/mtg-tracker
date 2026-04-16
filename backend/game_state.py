@@ -23,6 +23,7 @@ class Player(BaseModel):
     energy: int = Field(default=0, description="Energy counters (⚡)")
     rad: int = Field(default=0, description="Rad counters — mill at start of main phase")
     speed: int = Field(default=0, description="Speed counters (Aetherdrift racing mechanic)")
+    speed_increased_this_turn: bool = Field(default=False, description="True if speed was auto-incremented this turn (resets on next_turn)")
 
 player_health: dict[int, Player] = {}
 current_turn_id: int = 1
@@ -143,12 +144,38 @@ def next_turn():
     idx = active_ids.index(current_turn_id) if current_turn_id in active_ids else -1
     current_turn_id = active_ids[(idx + 1) % len(active_ids)]
     turn_started_at = time.time()
+    # Reset per-turn flags for all players
+    for player in player_health.values():
+        player.speed_increased_this_turn = False
     _save()
     return current_turn_id
+
+def _on_opponent_life_loss(player_id: int):
+    # Aetherdrift: the active player's speed increases when an opponent loses life,
+    # once per turn, only if currently 1–3 (not 0, not max).
+    if player_id == current_turn_id:
+        return
+    active = player_health.get(current_turn_id)
+    if active and 1 <= active.speed <= 3 and not active.speed_increased_this_turn:
+        active.speed += 1
+        active.speed_increased_this_turn = True
+
+def _on_elimination(player_id: int):
+    # Auto-transfer monarch/initiative to the active player when someone is eliminated.
+    global monarch_id, initiative_id
+    if player_health[player_id].life > 0:
+        return
+    if initiative_id == player_id and current_turn_id != player_id:
+        initiative_id = current_turn_id
+    if monarch_id == player_id and current_turn_id != player_id:
+        monarch_id = current_turn_id
 
 def update_player(player_id: int, delta: int) -> Player:
     try:
         player_health[player_id].life += delta
+        if delta < 0:
+            _on_opponent_life_loss(player_id)
+        _on_elimination(player_id)
         _save()
         return player_health[player_id]
     except KeyError:
@@ -160,6 +187,7 @@ def update_poison(player_id: int, delta: int) -> Player:
         player.poison = max(0, player.poison + delta)
         if player.poison >= POISON_LETHAL and player.life > 0:
             player.life = 0
+        _on_elimination(player_id)
         _save()
         return player
     except KeyError:
@@ -173,10 +201,14 @@ def update_commander_damage(target_id: int, source_id: int, delta: int, is_partn
         new = max(0, old + delta)
         player.commander_damage[key] = new
         actual = new - old
+        life_before = player.life
         if new >= COMMANDER_DAMAGE_LETHAL and player.life > 0:
             player.life = 0
         else:
             player.life -= actual
+        if player.life < life_before:
+            _on_opponent_life_loss(target_id)
+        _on_elimination(target_id)
         _save()
         return player
     except KeyError:
@@ -197,6 +229,10 @@ def update_counter(player_id: int, counter: str, delta: int) -> Player:
         new_value = max(0, current + delta)
         if counter == "speed":
             new_value = min(new_value, MAX_SPEED)
+            # A manual speed increase consumes the auto-increment for this turn,
+            # preventing the opponent-damage trigger from double-incrementing.
+            if delta > 0 and new_value > current:
+                player.speed_increased_this_turn = True
         setattr(player, counter, new_value)
         _save()
         return player

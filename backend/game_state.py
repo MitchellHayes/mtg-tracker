@@ -61,6 +61,12 @@ def initialize_game(player_configs: list[dict], starting_life: int):
     current_turn_id = 1
     _save()
 
+def reset_game():
+    global current_turn_id
+    player_health.clear()
+    current_turn_id = 1
+    _save()
+
 def get_state():
     return {"players": player_health, "current_turn_id": current_turn_id}
 

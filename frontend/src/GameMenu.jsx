@@ -2,6 +2,7 @@ import { useState, forwardRef, useImperativeHandle } from 'react'
 import { useNavigate } from 'react-router-dom'
 import GameSetup from './GameSetup'
 import nextTurnApi from './api/nextTurn'
+import resetGameApi from './api/resetGame'
 import { formatCommander } from './utils/formatCommander'
 import './GameMenu.css'
 
@@ -10,6 +11,7 @@ const GameMenu = forwardRef(function GameMenu({ gameState, currentTurnId, onNewG
 
   useImperativeHandle(ref, () => ({ open: () => setOpen(true) }))
   const [showConfirm, setShowConfirm] = useState(false)
+  const [showEndConfirm, setShowEndConfirm] = useState(false)
   const [showSetup, setShowSetup] = useState(false)
   const navigate = useNavigate()
 
@@ -78,6 +80,9 @@ const GameMenu = forwardRef(function GameMenu({ gameState, currentTurnId, onNewG
             <button className='game-menu-new-game' onClick={() => { setOpen(false); setShowConfirm(true) }}>
               New Game
             </button>
+            <button className='game-menu-end-game' onClick={() => { setOpen(false); setShowEndConfirm(true) }}>
+              End Game
+            </button>
             <button className='game-menu-close' onClick={() => setOpen(false)}>
               Close
             </button>
@@ -92,6 +97,22 @@ const GameMenu = forwardRef(function GameMenu({ gameState, currentTurnId, onNewG
             <div className='confirm-buttons'>
               <button className='confirm-cancel' onClick={() => setShowConfirm(false)}>Cancel</button>
               <button className='confirm-ok' onClick={handleNewGameConfirm}>New Game</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEndConfirm && (
+        <div className='confirm-overlay'>
+          <div className='confirm-modal'>
+            <p>End the current game? This will clear all life totals and data.</p>
+            <div className='confirm-buttons'>
+              <button className='confirm-cancel' onClick={() => setShowEndConfirm(false)}>Cancel</button>
+              <button className='confirm-ok' onClick={() => {
+                setShowEndConfirm(false)
+                resetGameApi()
+                navigate('/')
+              }}>End Game</button>
             </div>
           </div>
         </div>

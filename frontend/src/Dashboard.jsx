@@ -36,7 +36,7 @@ function CommanderDamagePips({ player, allPlayers }) {
   )
 }
 
-function PlayerCard({ player, allPlayers, isActiveTurn }) {
+function PlayerCard({ player, allPlayers, isActiveTurn, lastAlone }) {
   const isEliminated = player.life <= 0
   const hasSplitArt = player.commander_image && player.partner_image
   const singleArt = !hasSplitArt && (player.commander_image || player.partner_image)
@@ -60,8 +60,10 @@ function PlayerCard({ player, allPlayers, isActiveTurn }) {
     ? 'linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7))'
     : 'linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.88) 100%)'
 
+  if (lastAlone) cardStyle.gridColumn = '1 / -1'
+
   return (
-    <div className={`player-card ${isEliminated ? 'eliminated' : ''} ${isActiveTurn ? 'active-turn' : ''}`} style={cardStyle}>
+    <div className={`player-card ${isEliminated ? 'eliminated' : ''} ${isActiveTurn ? 'active-turn' : ''} ${lastAlone ? 'last-alone' : ''}`} style={cardStyle}>
       {hasSplitArt && (
         <div className='card-art-split'>
           <div className='card-art-crossfade-a' style={{ backgroundImage: `url(${player.commander_image})` }} />
@@ -93,14 +95,22 @@ function Dashboard() {
 
   const players = Object.values(gameState)
   const n = players.length
-  const cols = n <= 2 ? n : n <= 6 ? Math.ceil(n / 2) : 4
+  const cols = n === 3 ? 3 : n <= 2 ? n : n <= 6 ? 2 : 4
+  // When n is odd and > 3, the last card will be alone in its row — center it
+  const lastAlone = n > 3 && n % 2 !== 0
 
   return (
     <div className='dashboard'>
       <h1>MTG Life Tracker</h1>
       <div className='grid-container' style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
-        {players.map((player) => (
-          <PlayerCard key={player.id} player={player} allPlayers={gameState} isActiveTurn={player.id === currentTurnId} />
+        {players.map((player, i) => (
+          <PlayerCard
+            key={player.id}
+            player={player}
+            allPlayers={gameState}
+            isActiveTurn={player.id === currentTurnId}
+            lastAlone={lastAlone && i === players.length - 1}
+          />
         ))}
       </div>
     </div>

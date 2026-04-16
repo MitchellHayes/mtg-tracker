@@ -147,6 +147,24 @@
   color: var(--crimson-bright);
 }
 
+.game-menu-end-game {
+  width: 100%;
+  padding: 16px;
+  background: var(--bg-raised);
+  color: var(--crimson-bright);
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: var(--font-ui);
+  border: 1px solid var(--crimson-border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.game-menu-end-game:active {
+  background: var(--crimson-dim);
+}
+
 .game-menu-close {
   width: 100%;
   padding: 14px;

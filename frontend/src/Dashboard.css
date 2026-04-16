@@ -28,6 +28,12 @@
   min-height: 0;
 }
 
+.dashboard .player-card.last-alone {
+  max-width: 50%;
+  justify-self: center;
+  width: 100%;
+}
+
 .dashboard .player-card {
   background: var(--bg-surface);
   border: 1px solid var(--border);

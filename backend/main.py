@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from typing import Optional
 import httpx
-from game_state import initialize_game, get_state, update_player, update_poison, update_commander_damage, next_turn, Player
+from game_state import initialize_game, reset_game, get_state, update_player, update_poison, update_commander_damage, next_turn, Player
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(redoc_url=None)
@@ -126,6 +126,13 @@ class GameState(BaseModel):
 
 class NextTurnResponse(BaseModel):
     current_turn_id: int = Field(description="Player ID whose turn it now is")
+
+@app.post("/reset")
+async def reset_game_endpoint():
+    """End the current game, clearing all state. Broadcasts the empty state to all clients."""
+    reset_game()
+    await manager.broadcast(get_state())
+    return {}
 
 @app.get("/state", response_model=GameState)
 def get_game_state():

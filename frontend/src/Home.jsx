@@ -8,7 +8,7 @@ import { formatCommander } from './utils/formatCommander'
 import './Home.css'
 
 function Home() {
-  const { gameState } = useGameState()
+  const { gameState, connected } = useGameState()
   const [showSetup, setShowSetup] = useState(false)
   const navigate = useNavigate()
 
@@ -24,6 +24,7 @@ function Home() {
       <div className='home-header'>
         <h1>MTG Tracker</h1>
         <p className='home-subtitle'>Commander life tracking for your whole table</p>
+        {!connected && <p className='home-offline'>Reconnecting…</p>}
       </div>
 
       {gameInProgress ? (

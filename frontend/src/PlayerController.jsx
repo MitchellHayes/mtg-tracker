@@ -65,7 +65,7 @@ let deltaId = 0
 function PlayerController() {
   const { id } = useParams()
   const playerId = parseInt(id)
-  const { gameState, setGameState, currentTurnId, setCurrentTurnId } = useGameState()
+  const { gameState, setGameState, currentTurnId, setCurrentTurnId, connected } = useGameState()
   const { handleLife, handleCommanderDamage, handlePoison } = useGameActions(gameState)
   const [showExtras, setShowExtras] = useState(false)
   const [showLookup, setShowLookup] = useState(false)
@@ -157,6 +157,7 @@ function PlayerController() {
       {isEliminated && <div className='pc-eliminated-banner'>ELIMINATED</div>}
 
       <div className='pc-header'>
+        {!connected && <div className='pc-offline-badge'>Reconnecting…</div>}
         {isMyTurn && !isEliminated && <div className='pc-your-turn'>YOUR TURN</div>}
         <div className='pc-name'>{player.name}</div>
         {player.commander && (

@@ -12,6 +12,7 @@ function getWsUrl() {
 function useGameState() {
   const [gameState, setGameState] = useState({})
   const [currentTurnId, setCurrentTurnId] = useState(null)
+  const [connected, setConnected] = useState(false)
 
   const applyState = (data) => {
     setGameState(data.players ?? data)
@@ -27,6 +28,10 @@ function useGameState() {
       if (destroyed) return
       ws = new WebSocket(getWsUrl())
 
+      ws.onopen = () => {
+        setConnected(true)
+      }
+
       ws.onmessage = (event) => {
         try {
           applyState(JSON.parse(event.data))
@@ -36,6 +41,7 @@ function useGameState() {
       }
 
       ws.onclose = () => {
+        setConnected(false)
         if (!destroyed) reconnectTimer = setTimeout(connect, 2000)
       }
 
@@ -53,7 +59,7 @@ function useGameState() {
     }
   }, [])
 
-  return { gameState, setGameState, currentTurnId, setCurrentTurnId }
+  return { gameState, setGameState, currentTurnId, setCurrentTurnId, connected }
 }
 
 export default useGameState

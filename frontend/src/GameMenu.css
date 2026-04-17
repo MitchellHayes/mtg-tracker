@@ -128,6 +128,45 @@
 }
 
 
+.game-menu-threat-vote {
+  width: 100%;
+  padding: 16px;
+  background: var(--bg-raised);
+  color: #e03c3c;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: var(--font-ui);
+  border: 1px solid #e03c3c44;
+  border-radius: 12px;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.game-menu-threat-vote:active {
+  background: #e03c3c18;
+  border-color: #e03c3c;
+}
+
+.game-menu-threat-clear {
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+  font-family: var(--font-ui);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: color 0.15s;
+}
+
+.game-menu-threat-clear:active {
+  color: var(--text-bright);
+}
+
 .game-menu-new-game {
   width: 100%;
   padding: 16px;

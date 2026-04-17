@@ -10,6 +10,9 @@ import setInitiativeApi from './api/setInitiative'
 import setDayNightApi from './api/setDayNight'
 import updateCounter from './api/updateCounter'
 import GameMenu from './GameMenu'
+import { startThreatVote, castThreatVote, clearThreatVote } from './api/threatVote'
+import { nominateWatchlist, clearWatchlist } from './api/watchlist'
+import { SCRYFALL_HEADERS } from './api/scryfall'
 import CardLookup from './CardLookup'
 import { formatCommander } from './utils/formatCommander'
 import { COMMANDER_DAMAGE_WARNING, COMMANDER_DAMAGE_LETHAL, POISON_WARNING, POISON_LETHAL } from './constants'
@@ -52,6 +55,68 @@ function useLongPress(onTap, onHoldTick, onHoldStart, onHoldEnd, holdInterval = 
   }
 }
 
+function WatchlistOverlay({ playerId, onClose }) {
+  const [query, setQuery] = useState('')
+  const [suggestions, setSuggestions] = useState([])
+  const [nominating, setNominating] = useState(false)
+  const debounceRef = useRef(null)
+  const inputRef = useRef(null)
+
+  useEffect(() => { inputRef.current?.focus() }, [])
+
+  useEffect(() => {
+    clearTimeout(debounceRef.current)
+    if (query.length < 2) { setSuggestions([]); return }
+    debounceRef.current = setTimeout(() => {
+      fetch(`https://api.scryfall.com/cards/autocomplete?q=${encodeURIComponent(query)}&include_extras=false`, { headers: SCRYFALL_HEADERS })
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => setSuggestions(data?.data?.slice(0, 6) ?? []))
+        .catch(() => {})
+    }, 100)
+    return () => clearTimeout(debounceRef.current)
+  }, [query])
+
+  const nominate = (name) => {
+    setNominating(true)
+    setSuggestions([])
+    nominateWatchlist(name, playerId).finally(onClose)
+  }
+
+  return (
+    <div className='threat-vote-overlay'>
+      <div className='threat-vote-sheet'>
+        <div className='threat-vote-title'>📌 Nominate for Watchlist</div>
+        <div className='threat-vote-subtitle'>Table will be reminded to deal with this card</div>
+        <div className='wl-search'>
+          <div className='wl-input-wrap'>
+            <input
+              ref={inputRef}
+              className='wl-input'
+              type='text'
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={nominating ? 'Nominating…' : 'Search card name…'}
+              disabled={nominating}
+              autoComplete='off'
+            />
+            {query && !nominating && (
+              <button className='wl-clear' onClick={() => { setQuery(''); setSuggestions([]) }}>✕</button>
+            )}
+          </div>
+          {suggestions.length > 0 && (
+            <ul className='wl-suggestions'>
+              {suggestions.map((name) => (
+                <li key={name} onMouseDown={() => nominate(name)}>{name}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <button className='pc-politics-btn secondary' style={{ marginTop: 4 }} onClick={onClose}>Cancel</button>
+      </div>
+    </div>
+  )
+}
+
 function FloatingDelta({ deltas }) {
   return (
     <div className='pc-float-layer' aria-hidden>
@@ -69,11 +134,13 @@ let deltaId = 0
 function PlayerController() {
   const { id } = useParams()
   const playerId = parseInt(id)
-  const { gameState, setGameState, currentTurnId, setCurrentTurnId, monarchId, initiativeId, dayNight, connected } = useGameState()
+  const { gameState, setGameState, currentTurnId, setCurrentTurnId, monarchId, initiativeId, dayNight, connected, threatVote, watchlist } = useGameState()
   const { handleLife, handleCommanderDamage, handlePoison } = useGameActions(gameState)
   const [showCounters, setShowCounters] = useState(false)
   const [showTokens, setShowTokens] = useState(false)
   const [showCmdrDmg, setShowCmdrDmg] = useState(false)
+  const [showPolitics, setShowPolitics] = useState(false)
+  const [showWatchlistOverlay, setShowWatchlistOverlay] = useState(false)
   const [showLookup, setShowLookup] = useState(false)
   const gameMenuRef = useRef(null)
   const [floatDeltas, setFloatDeltas] = useState([])
@@ -216,12 +283,6 @@ function PlayerController() {
         <div className='pc-name'>{player.name}</div>
         {player.commander && (
           <div className='pc-commander'>{formatCommander(player.commander, player.partner)}</div>
-        )}
-        {(isMonarch || hasInitiative) && (
-          <div className='pc-token-badges'>
-            {isMonarch && <span className='pc-token-badge monarch'><FontAwesomeIcon icon={faCrown} /> Monarch</span>}
-            {hasInitiative && <span className='pc-token-badge initiative'><FontAwesomeIcon icon={faDungeon} /> Initiative</span>}
-          </div>
         )}
       </div>
 
@@ -448,6 +509,68 @@ function PlayerController() {
           </div>
         )}
 
+        {/* ── Politics ── */}
+        <div className={`pc-accordion ${showPolitics ? 'open' : ''}`}>
+          <button className='pc-extras-header' onClick={() => setShowPolitics((v) => !v)}>
+            <span>Politics</span>
+            <div className='pc-extras-header-right'>
+              {!showPolitics && threatVote?.result_id && !threatVote?.active && (
+                <span className='pc-extras-summary-pip'>🎯 Threat</span>
+              )}
+              {!showPolitics && threatVote?.active && (
+                <span className='pc-extras-summary-pip'>👁 Voting…</span>
+              )}
+              {!showPolitics && watchlist && (
+                <span className='pc-extras-summary-pip'>📌 {watchlist.card_name}</span>
+              )}
+              <FontAwesomeIcon icon={showPolitics ? faChevronUp : faChevronDown} />
+            </div>
+          </button>
+          {showPolitics && (
+            <div className='pc-extras'>
+
+              {/* Threat Vote */}
+              <div className='pc-module'>
+                <div className='pc-module-left'>
+                  <span className='pc-module-label'>Threat Vote</span>
+                  {threatVote?.result_id && !threatVote?.active && (
+                    <span className='pc-cmdr-name'>
+                      🎯 {gameState[threatVote.result_id]?.name ?? 'Unknown'}
+                    </span>
+                  )}
+                </div>
+                <div className='pc-politics-actions'>
+                  {threatVote?.result_id && !threatVote?.active && (
+                    <button className='pc-politics-btn secondary' onClick={() => clearThreatVote()}>Clear</button>
+                  )}
+                  <button className='pc-politics-btn' onClick={() => { startThreatVote(); vibrate(40) }}>
+                    {threatVote?.active ? 'Restart' : 'Call Vote'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Watchlist */}
+              <div className='pc-module'>
+                <div className='pc-module-left'>
+                  <span className='pc-module-label'>Watchlist</span>
+                  {watchlist && (
+                    <span className='pc-cmdr-name'>📌 {watchlist.card_name}</span>
+                  )}
+                </div>
+                <div className='pc-politics-actions'>
+                  {watchlist && (
+                    <button className='pc-politics-btn secondary' onClick={() => clearWatchlist()}>Clear</button>
+                  )}
+                  <button className='pc-politics-btn' onClick={() => setShowWatchlistOverlay(true)}>
+                    {watchlist ? 'Replace' : 'Nominate'}
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          )}
+        </div>
+
       </div>
 
       <div className='pc-toolbar'>
@@ -476,6 +599,36 @@ function PlayerController() {
       />
 
       {showLookup && <CardLookup onClose={() => setShowLookup(false)} />}
+      {showWatchlistOverlay && <WatchlistOverlay playerId={playerId} onClose={() => setShowWatchlistOverlay(false)} />}
+
+      {threatVote?.active && !threatVote.votes?.[String(playerId)] && (
+        <div className='threat-vote-overlay'>
+          <div className='threat-vote-sheet'>
+            <div className='threat-vote-title'>👁 Who's the Biggest Threat?</div>
+            <div className='threat-vote-subtitle'>Your vote is anonymous</div>
+            <div className='threat-vote-options'>
+              {Object.values(gameState)
+                .filter((p) => p.id !== playerId && p.life > 0)
+                .map((p) => (
+                  <button
+                    key={p.id}
+                    className='threat-vote-btn'
+                    onClick={() => { castThreatVote(playerId, p.id); vibrate(40) }}
+                  >
+                    {p.name}
+                    {p.commander && <span className='threat-vote-commander'>{p.commander}</span>}
+                  </button>
+                ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {threatVote?.active && threatVote.votes?.[String(playerId)] && (
+        <div className='threat-vote-waiting'>
+          <span>⏳ Waiting for others to vote…</span>
+        </div>
+      )}
     </div>
   )
 }

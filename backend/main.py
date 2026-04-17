@@ -12,6 +12,8 @@ from game_state import (
     initialize_game, reset_game, get_state,
     update_player, update_poison, update_commander_damage, next_turn,
     update_counter, set_monarch, set_initiative, set_day_night,
+    start_threat_vote, cast_threat_vote, clear_threat_vote,
+    set_watchlist, clear_watchlist,
     Player, VALID_COUNTERS,
 )
 from fastapi.middleware.cors import CORSMiddleware
@@ -292,6 +294,66 @@ async def set_day_night_endpoint(request: DayNightRequest):
     state = get_state()
     await manager.broadcast(state)
     return state
+
+@app.post("/threat_vote/start")
+async def start_threat_vote_endpoint():
+    """Start a new threat vote. Resets any existing vote."""
+    start_threat_vote()
+    await manager.broadcast(get_state())
+    return {}
+
+class CastVoteRequest(BaseModel):
+    voter_id: int = Field(description="ID of the player casting the vote")
+    target_id: int = Field(description="ID of the player being voted as the threat")
+
+@app.post("/threat_vote/cast")
+async def cast_threat_vote_endpoint(request: CastVoteRequest):
+    """Cast a vote. Auto-resolves when all alive players have voted."""
+    try:
+        cast_threat_vote(request.voter_id, request.target_id)
+    except (ValueError, KeyError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    await manager.broadcast(get_state())
+    return {}
+
+class WatchlistRequest(BaseModel):
+    card_name: str = Field(description="Exact card name to nominate")
+    nominated_by_id: int = Field(description="Player ID making the nomination")
+
+@app.post("/watchlist/nominate")
+async def nominate_watchlist(request: WatchlistRequest):
+    """Nominate a card for the Watchlist. Fetches card art from Scryfall."""
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.get(SCRYFALL_NAMED, params={"exact": request.card_name}, headers=SCRYFALL_HEADERS)
+            resp.raise_for_status()
+            card = resp.json()
+            name = card.get("name", request.card_name)
+            image = card.get("image_uris", {}).get("normal")
+            if not image:
+                faces = card.get("card_faces", [])
+                if faces:
+                    image = faces[0].get("image_uris", {}).get("normal")
+        except Exception:
+            name = request.card_name
+            image = None
+    set_watchlist(name, image, request.nominated_by_id)
+    await manager.broadcast(get_state())
+    return {}
+
+@app.post("/watchlist/clear")
+async def clear_watchlist_endpoint():
+    """Remove the current Watchlist entry."""
+    clear_watchlist()
+    await manager.broadcast(get_state())
+    return {}
+
+@app.post("/threat_vote/clear")
+async def clear_threat_vote_endpoint():
+    """Clear the current threat vote and result."""
+    clear_threat_vote()
+    await manager.broadcast(get_state())
+    return {}
 
 # Serve built frontend — must come after all API routes
 DIST = Path(__file__).parent.parent / "frontend" / "dist"

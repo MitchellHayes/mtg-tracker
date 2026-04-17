@@ -28,6 +28,8 @@ current_turn_id: int = 1
 monarch_id: Optional[int] = None    # player who currently holds the Monarch token
 initiative_id: Optional[int] = None # player who currently holds the Initiative
 day_night: Optional[str] = None     # "day" | "night" | None (neither)
+threat_vote: Optional[dict] = None  # { active: bool, votes: {str(voter_id): target_id}, result_id: int|None }
+watchlist: Optional[dict] = None   # { card_name: str, card_image: str|None, nominated_by_id: int }
 
 # ── SQLite helpers ────────────────────────────────────────────────────────────
 
@@ -50,6 +52,8 @@ def _save():
         "monarch_id": monarch_id,
         "initiative_id": initiative_id,
         "day_night": day_night,
+        "threat_vote": threat_vote,
+        "watchlist": watchlist,
     })
     conn.execute(
         "INSERT OR REPLACE INTO game_state (id, state_json) VALUES (1, ?)",
@@ -87,6 +91,8 @@ def _load():
         monarch_id = data.get("monarch_id")
         initiative_id = data.get("initiative_id")
         day_night = data.get("day_night")
+        threat_vote = data.get("threat_vote")
+        watchlist = data.get("watchlist")
     except Exception:
         pass  # corrupt state, start fresh
 
@@ -99,10 +105,12 @@ def get_state() -> dict:
         "monarch_id": monarch_id,
         "initiative_id": initiative_id,
         "day_night": day_night,
+        "threat_vote": threat_vote,
+        "watchlist": watchlist,
     }
 
 def initialize_game(player_configs: list[dict], starting_life: int):
-    global current_turn_id, monarch_id, initiative_id, day_night
+    global current_turn_id, monarch_id, initiative_id, day_night, threat_vote, watchlist
     player_health.clear()
     for i, config in enumerate(player_configs):
         player_id = i + 1
@@ -120,15 +128,19 @@ def initialize_game(player_configs: list[dict], starting_life: int):
     monarch_id = None
     initiative_id = None
     day_night = None
+    threat_vote = None
+    watchlist = None
     _save()
 
 def reset_game():
-    global current_turn_id, monarch_id, initiative_id, day_night
+    global current_turn_id, monarch_id, initiative_id, day_night, threat_vote, watchlist
     player_health.clear()
     current_turn_id = 1
     monarch_id = None
     initiative_id = None
     day_night = None
+    threat_vote = None
+    watchlist = None
     _save()
 
 def next_turn():
@@ -205,6 +217,45 @@ def set_day_night(state: Optional[str]):
     if state not in ("day", "night", None):
         raise ValueError(f"Invalid day_night value: {state!r}")
     day_night = state
+    _save()
+
+def start_threat_vote():
+    global threat_vote
+    threat_vote = {"active": True, "votes": {}, "result_id": None}
+    _save()
+
+def cast_threat_vote(voter_id: int, target_id: int):
+    global threat_vote
+    if not threat_vote or not threat_vote["active"]:
+        raise ValueError("No active vote")
+    if voter_id not in player_health:
+        raise KeyError(f"Player {voter_id} not found")
+    if target_id not in player_health:
+        raise KeyError(f"Target player {target_id} not found")
+    threat_vote["votes"][str(voter_id)] = target_id
+    alive_ids = [pid for pid, p in player_health.items() if p.life > 0]
+    if all(str(pid) in threat_vote["votes"] for pid in alive_ids):
+        tally: dict[int, int] = {}
+        for tid in threat_vote["votes"].values():
+            tally[tid] = tally.get(tid, 0) + 1
+        result_id = max(tally, key=lambda k: (tally[k], -k))
+        threat_vote["active"] = False
+        threat_vote["result_id"] = result_id
+    _save()
+
+def clear_threat_vote():
+    global threat_vote
+    threat_vote = None
+    _save()
+
+def set_watchlist(card_name: str, card_image: Optional[str], nominated_by_id: int):
+    global watchlist
+    watchlist = {"card_name": card_name, "card_image": card_image, "nominated_by_id": nominated_by_id}
+    _save()
+
+def clear_watchlist():
+    global watchlist
+    watchlist = None
     _save()
 
 _load()

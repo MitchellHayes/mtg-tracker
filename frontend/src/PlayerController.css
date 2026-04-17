@@ -617,3 +617,191 @@
   color: var(--text-muted);
   text-transform: uppercase;
 }
+
+/* ── Politics accordion ── */
+.pc-politics-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.pc-politics-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1.5px solid #e03c3c66;
+  background: transparent;
+  color: #e03c3c;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: var(--font-ui);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.pc-politics-btn:active {
+  background: #e03c3c22;
+  border-color: #e03c3c;
+}
+
+.pc-politics-btn.secondary {
+  border-color: var(--border);
+  color: var(--text-muted);
+}
+
+.pc-politics-btn.secondary:active {
+  background: var(--bg-hover);
+  color: var(--text-bright);
+}
+
+/* ── Watchlist Search ── */
+.wl-search {
+  width: 100%;
+}
+
+.wl-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.wl-input {
+  width: 100%;
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 36px 9px 12px;
+  font-size: 0.85rem;
+  color: var(--text-bright);
+  font-family: var(--font-ui);
+  box-sizing: border-box;
+  outline: none;
+}
+
+.wl-input:focus {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.wl-input::placeholder {
+  color: var(--text-muted);
+}
+
+.wl-clear {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.wl-suggestions {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 4px 0;
+  overflow: hidden;
+}
+
+.wl-suggestions li {
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  color: var(--text-bright);
+  cursor: pointer;
+}
+
+.wl-suggestions li:active {
+  background: rgba(255,255,255,0.06);
+}
+
+/* ── Threat Vote ── */
+.threat-vote-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: flex-end;
+  z-index: 50;
+  backdrop-filter: blur(4px);
+}
+
+.threat-vote-sheet {
+  width: 100%;
+  background: var(--bg-raised, #1a1a2e);
+  border-radius: 20px 20px 0 0;
+  padding: 24px 20px max(24px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.threat-vote-title {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--text-bright, #fff);
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+.threat-vote-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: -6px;
+}
+
+.threat-vote-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.threat-vote-btn {
+  background: var(--bg-card, #12121e);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  color: var(--text-bright, #fff);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.threat-vote-btn:active {
+  background: #e03c3c22;
+  border-color: #e03c3c;
+}
+
+.threat-vote-commander {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.threat-vote-waiting {
+  position: absolute;
+  bottom: calc(84px + max(20px, env(safe-area-inset-bottom)) + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(30, 30, 50, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 8px 18px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  z-index: 10;
+}

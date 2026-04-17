@@ -16,6 +16,8 @@ function useGameState() {
   const [initiativeId, setInitiativeId] = useState(null)
   const [dayNight, setDayNight] = useState(null)
   const [connected, setConnected] = useState(false)
+  const [threatVote, setThreatVote] = useState(null)
+  const [watchlist, setWatchlist] = useState(null)
   const [turnStartedAt, setTurnStartedAt] = useState(null)
   const prevTurnIdRef = useRef(null)
 
@@ -33,6 +35,8 @@ function useGameState() {
     if (data.monarch_id !== undefined) setMonarchId(data.monarch_id)
     if (data.initiative_id !== undefined) setInitiativeId(data.initiative_id)
     if (data.day_night !== undefined) setDayNight(data.day_night)
+    if (data.threat_vote !== undefined) setThreatVote(data.threat_vote)
+    if (data.watchlist !== undefined) setWatchlist(data.watchlist)
   }, [])
 
   useEffect(() => {
@@ -93,6 +97,8 @@ function useGameState() {
     dayNight,
     connected,
     turnStartedAt,
+    threatVote,
+    watchlist,
   }
 }
 

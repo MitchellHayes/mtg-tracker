@@ -29,12 +29,30 @@ Full-stack app: React SPA frontend + FastAPI backend with real-time WebSocket sy
 ### Data flow
 All game mutations go through a REST endpoint → backend updates in-memory state → broadcasts full game state over WebSocket to all connected clients → frontend `useGameState` hook updates React state.
 
-State persists to `backend/game_state.json` (auto-loaded on startup).
+State persists to `backend/game_state.db` (SQLite, `INSERT OR REPLACE` on a single row). Auto-loaded on startup. Migrates from legacy `game_state.json` if DB doesn't exist yet.
 
 ### Backend (`backend/`)
-- `main.py` — FastAPI app. REST endpoints: `/init`, `/update`, `/commander_damage`, `/poison`, `/next_turn`, `/reset`. WebSocket at `/ws`. Also serves the built frontend as static files.
-- `game_state.py` — In-memory state (player dict, current turn). Pydantic `Player` model. `_save()`/`_load()` for JSON persistence. Call `_save()` after any mutation.
-- Scryfall API is called during `/init` to fetch commander art and color identity; rate-limited to one request per 0.5s via `asyncio.sleep`.
+- `main.py` — FastAPI app. REST endpoints listed below. WebSocket at `/ws`. Also serves the built frontend as static files.
+- `game_state.py` — In-memory state: `player_health` dict, `current_turn_id`, `monarch_id`, `initiative_id`, `day_night`, `threat_vote`, `watchlist`. Pydantic `Player` model. Call `_save()` after any mutation.
+- Scryfall API called during `/init` and `/watchlist/nominate`; rate-limited to one call per 0.5s.
+
+**REST endpoints:**
+- `POST /init` — Start game, fetch Scryfall data for commanders
+- `GET /state` — Read current game state
+- `POST /update` — Adjust a player's life total
+- `POST /poison` — Adjust poison counters (floor 0)
+- `POST /commander_damage` — Record commander damage (per source, with partner flag)
+- `POST /counter` — Adjust energy/rad/speed counters (speed capped at 4)
+- `POST /next_turn` — Advance to next living player
+- `POST /monarch` — Set/clear Monarch token
+- `POST /initiative` — Set/clear Initiative
+- `POST /day_night` — Set day/night state (`"day"`, `"night"`, or null)
+- `POST /threat_vote/start` — Start a new threat vote
+- `POST /threat_vote/cast` — Cast a vote; auto-resolves when all alive players have voted
+- `POST /threat_vote/clear` — Clear vote and result
+- `POST /watchlist/nominate` — Nominate a card (fetches art from Scryfall)
+- `POST /watchlist/clear` — Clear the watchlist
+- `POST /reset` — Clear all state
 
 ### Frontend (`frontend/src/`)
 - **Routes:** `/` (Home), `/dashboard` (Dashboard — TV/spectator view), `/player/:id` (PlayerController)
@@ -44,6 +62,8 @@ State persists to `backend/game_state.json` (auto-loaded on startup).
 
 ### Key conventions
 - Player IDs are 1-based integers.
-- Commander damage keys in state: `"{source_id}"` for normal commander, `"{source_id}_p"` for partner.
+- Commander damage keys: `"{source_id}"` for normal commander, `"{source_id}_p"` for partner.
+- `threat_vote` shape: `{ active: bool, votes: { str(voter_id): target_id }, result_id: int|null }`
+- `watchlist` shape: `{ card_name, card_image, nominated_by_id }`
 - CSS uses custom properties defined in `index.css` (--bg-base, --gold, --crimson-bright, --text-muted, etc.).
 - `QRWidget` encodes `window.location.origin` — used only on Dashboard.

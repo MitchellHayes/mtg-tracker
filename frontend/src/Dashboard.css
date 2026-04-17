@@ -156,6 +156,19 @@
   border-radius: 0 0 10px 0;
   z-index: 2;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.turn-timer {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+.turn-timer.turn-timer-warn {
+  opacity: 1;
+  color: var(--crimson-bright, #e03c3c);
 }
 
 .dashboard .player-card.eliminated {

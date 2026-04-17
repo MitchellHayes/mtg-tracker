@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSkull, faCrown, faDungeon, faSun, faMoon } from '@fortawesome/free-solid-svg-icons'
 import useGameState from './hooks/useGameState'
@@ -68,7 +69,7 @@ function lifeClass(life) {
   return ''
 }
 
-function PlayerCard({ player, allPlayers, isActiveTurn, lastAlone, isWinner, isMonarch }) {
+function PlayerCard({ player, allPlayers, isActiveTurn, lastAlone, isWinner, isMonarch, turnStartedAt }) {
   const isEliminated = player.life <= 0
   const hasSplitArt = player.commander_image && player.partner_image
   const singleArt = !hasSplitArt && (player.commander_image || player.partner_image)
@@ -104,7 +105,11 @@ function PlayerCard({ player, allPlayers, isActiveTurn, lastAlone, isWinner, isM
         </div>
       )}
       {isWinner && <div className='winner-banner'>WINNER</div>}
-      {!isWinner && isActiveTurn && !isEliminated && <div className='active-turn-banner'>ACTIVE TURN</div>}
+      {!isWinner && isActiveTurn && !isEliminated && (
+        <div className='active-turn-banner'>
+          ACTIVE TURN <TurnTimer turnStartedAt={turnStartedAt} />
+        </div>
+      )}
       {isEliminated && <div className='eliminated-banner'>ELIMINATED</div>}
       <div className='card-content'>
         {isMonarch && <FontAwesomeIcon icon={faCrown} className='monarch-crown' />}
@@ -124,6 +129,28 @@ function PlayerCard({ player, allPlayers, isActiveTurn, lastAlone, isWinner, isM
         <CommanderDamagePips player={player} allPlayers={allPlayers} />
       </div>
     </div>
+  )
+}
+
+function TurnTimer({ turnStartedAt }) {
+  const [elapsed, setElapsed] = useState(0)
+
+  useEffect(() => {
+    if (!turnStartedAt) return
+    setElapsed(Math.floor((Date.now() - turnStartedAt) / 1000))
+    const id = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - turnStartedAt) / 1000))
+    }, 1000)
+    return () => clearInterval(id)
+  }, [turnStartedAt])
+
+  const m = Math.floor(elapsed / 60)
+  const s = elapsed % 60
+  const warn = elapsed >= 300
+  return (
+    <span className={`turn-timer ${warn ? 'turn-timer-warn' : ''}`}>
+      {m}:{String(s).padStart(2, '0')}
+    </span>
   )
 }
 
@@ -155,7 +182,7 @@ function GameStatusBar({ initiativeId, dayNight, allPlayers }) {
 }
 
 function Dashboard() {
-  const { gameState, currentTurnId, monarchId, initiativeId, dayNight } = useGameState()
+  const { gameState, currentTurnId, monarchId, initiativeId, dayNight, turnStartedAt } = useGameState()
 
   const players = Object.values(gameState)
   const n = players.length
@@ -191,6 +218,7 @@ function Dashboard() {
             lastAlone={!winner && lastAlone && i === players.length - 1}
             isWinner={winner?.id === player.id}
             isMonarch={player.id === monarchId}
+            turnStartedAt={player.id === currentTurnId ? turnStartedAt : null}
           />
         ))}
       </div>

@@ -69,7 +69,7 @@ function lifeClass(life) {
   return ''
 }
 
-function PlayerCard({ player, allPlayers, isActiveTurn, lastAlone, isWinner, isMonarch, turnStartedAt, isThreat, voteActive }) {
+function PlayerCard({ player, allPlayers, isActiveTurn, lastAlone, isWinner, isMonarch, turnStartedAt }) {
   const isEliminated = player.life <= 0
   const hasSplitArt = player.commander_image && player.partner_image
   const singleArt = !hasSplitArt && (player.commander_image || player.partner_image)
@@ -96,7 +96,7 @@ function PlayerCard({ player, allPlayers, isActiveTurn, lastAlone, isWinner, isM
   if (lastAlone) cardStyle.gridColumn = '1 / -1'
 
   return (
-    <div className={`player-card ${isEliminated ? 'eliminated' : ''} ${isActiveTurn && !isWinner ? 'active-turn' : ''} ${lastAlone ? 'last-alone' : ''} ${isWinner ? 'winner' : ''} ${isThreat ? 'threat' : ''}`} style={cardStyle}>
+    <div className={`player-card ${isEliminated ? 'eliminated' : ''} ${isActiveTurn && !isWinner ? 'active-turn' : ''} ${lastAlone ? 'last-alone' : ''} ${isWinner ? 'winner' : ''}`} style={cardStyle}>
       {hasSplitArt && (
         <div className='card-art-split'>
           <div className='card-art-crossfade-a' style={{ backgroundImage: `url(${player.commander_image})` }} />
@@ -104,8 +104,6 @@ function PlayerCard({ player, allPlayers, isActiveTurn, lastAlone, isWinner, isM
           <div className='card-art-overlay' style={{ background: overlayStyle }} />
         </div>
       )}
-      {isThreat && <div className='threat-banner'>🎯 THREAT</div>}
-      {voteActive && !isThreat && <div className='threat-voting-banner'>👁 Voting…</div>}
       {isWinner && <div className='winner-banner'>WINNER</div>}
       {!isWinner && isActiveTurn && !isEliminated && (
         <div className='active-turn-banner'>
@@ -156,22 +154,7 @@ function TurnTimer({ turnStartedAt }) {
   )
 }
 
-function PublicEnemy({ watchlist }) {
-  if (!watchlist) return null
-  return (
-    <div className='public-enemy'>
-      {watchlist.card_image && (
-        <img className='public-enemy-art' src={watchlist.card_image} alt={watchlist.card_name} />
-      )}
-      <div className='public-enemy-text'>
-        <span className='public-enemy-label'>Public Enemy #1</span>
-        <span className='public-enemy-name'>{watchlist.card_name}</span>
-      </div>
-    </div>
-  )
-}
-
-function GameStatusBar({ initiativeId, dayNight, allPlayers, watchlist }) {
+function GameStatusBar({ initiativeId, dayNight, allPlayers }) {
   const initiative = allPlayers[initiativeId]
 
   const cycleDayNight = () => {
@@ -179,7 +162,7 @@ function GameStatusBar({ initiativeId, dayNight, allPlayers, watchlist }) {
     setDayNightApi(next)
   }
 
-  if (!initiative && !dayNight && !watchlist) return null
+  if (!initiative && !dayNight) return null
 
   return (
     <div className='dashboard-status-bar'>
@@ -194,13 +177,12 @@ function GameStatusBar({ initiativeId, dayNight, allPlayers, watchlist }) {
           {dayNight === 'day' ? ' Day' : ' Night'}
         </button>
       )}
-      {watchlist && <PublicEnemy watchlist={watchlist} />}
     </div>
   )
 }
 
 function Dashboard() {
-  const { gameState, currentTurnId, monarchId, initiativeId, dayNight, turnStartedAt, threatVote, watchlist } = useGameState()
+  const { gameState, currentTurnId, monarchId, initiativeId, dayNight, turnStartedAt } = useGameState()
 
   const players = Object.values(gameState)
   const n = players.length
@@ -225,7 +207,7 @@ function Dashboard() {
 
   return (
     <div className='dashboard'>
-      <GameStatusBar initiativeId={initiativeId} dayNight={dayNight} allPlayers={gameState} watchlist={watchlist} />
+      <GameStatusBar initiativeId={initiativeId} dayNight={dayNight} allPlayers={gameState} />
       <div className='grid-container' style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
         {(winner ? [winner] : players).map((player, i) => (
           <PlayerCard
@@ -237,8 +219,6 @@ function Dashboard() {
             isWinner={winner?.id === player.id}
             isMonarch={player.id === monarchId}
             turnStartedAt={player.id === currentTurnId ? turnStartedAt : null}
-            isThreat={threatVote?.result_id === player.id && !threatVote?.active}
-            voteActive={!!threatVote?.active}
           />
         ))}
       </div>

@@ -33,8 +33,8 @@ State persists to `backend/game_state.db` (SQLite, `INSERT OR REPLACE` on a sing
 
 ### Backend (`backend/`)
 - `main.py` — FastAPI app. REST endpoints listed below. WebSocket at `/ws`. Also serves the built frontend as static files.
-- `game_state.py` — In-memory state: `player_health` dict, `current_turn_id`, `monarch_id`, `initiative_id`, `day_night`, `threat_vote`, `watchlist`. Pydantic `Player` model. Call `_save()` after any mutation.
-- Scryfall API called during `/init` and `/watchlist/nominate`; rate-limited to one call per 0.5s.
+- `game_state.py` — In-memory state: `player_health` dict, `current_turn_id`, `monarch_id`, `initiative_id`, `day_night`. Pydantic `Player` model. Call `_save()` after any mutation.
+- Scryfall API called during `/init`; rate-limited to one call per 0.5s.
 
 **REST endpoints:**
 - `POST /init` — Start game, fetch Scryfall data for commanders
@@ -47,11 +47,6 @@ State persists to `backend/game_state.db` (SQLite, `INSERT OR REPLACE` on a sing
 - `POST /monarch` — Set/clear Monarch token
 - `POST /initiative` — Set/clear Initiative
 - `POST /day_night` — Set day/night state (`"day"`, `"night"`, or null)
-- `POST /threat_vote/start` — Start a new threat vote
-- `POST /threat_vote/cast` — Cast a vote; auto-resolves when all alive players have voted
-- `POST /threat_vote/clear` — Clear vote and result
-- `POST /watchlist/nominate` — Nominate a card (fetches art from Scryfall)
-- `POST /watchlist/clear` — Clear the watchlist
 - `POST /reset` — Clear all state
 
 ### Frontend (`frontend/src/`)
@@ -63,7 +58,5 @@ State persists to `backend/game_state.db` (SQLite, `INSERT OR REPLACE` on a sing
 ### Key conventions
 - Player IDs are 1-based integers.
 - Commander damage keys: `"{source_id}"` for normal commander, `"{source_id}_p"` for partner.
-- `threat_vote` shape: `{ active: bool, votes: { str(voter_id): target_id }, result_id: int|null }`
-- `watchlist` shape: `{ card_name, card_image, nominated_by_id }`
 - CSS uses custom properties defined in `index.css` (--bg-base, --gold, --crimson-bright, --text-muted, etc.).
 - `QRWidget` encodes `window.location.origin` — used only on Dashboard.

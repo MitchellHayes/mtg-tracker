@@ -26,8 +26,6 @@ Each player tracks their own life on their phone and a TV displays the dashboard
 - Energy, Rad, and Speed (Aetherdrift) counter tracking; Speed capped at 4
 - Monarch and Initiative token tracking
 - Day/Night state for Innistrad mechanics
-- Threat vote — players anonymously nominate the biggest threat; auto-resolves when all alive players have voted
-- Watchlist — nominate any card by name; art fetched from Scryfall and shown on the dashboard
 - Turn order tracking with active turn indicator across all views
 - Long-press life buttons to change life in increments of 5
 - In-app card lookup — search any Magic card by name and view its art, set, and rarity
@@ -54,11 +52,6 @@ Interactive docs are available at `/docs` (Swagger UI) when the backend is runni
 | POST | `/monarch` | Set or clear the Monarch token |
 | POST | `/initiative` | Set or clear the Initiative |
 | POST | `/day_night` | Set day/night state (`"day"`, `"night"`, or null) |
-| POST | `/threat_vote/start` | Start a new threat vote |
-| POST | `/threat_vote/cast` | Cast a vote; auto-resolves when all alive players have voted |
-| POST | `/threat_vote/clear` | Clear vote and result |
-| POST | `/watchlist/nominate` | Nominate a card for the watchlist (fetches art from Scryfall) |
-| POST | `/watchlist/clear` | Clear the watchlist |
 
 ---
 

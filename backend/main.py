@@ -27,7 +27,8 @@ class ConnectionManager:
         self.active.append(ws)
 
     def disconnect(self, ws: WebSocket):
-        self.active.remove(ws)
+        if ws in self.active:
+            self.active.remove(ws)
 
     async def broadcast(self, data: dict):
         message = json.dumps(jsonable_encoder(data))
@@ -129,6 +130,7 @@ class GameState(BaseModel):
     monarch_id: Optional[int] = Field(default=None, description="Player ID who holds the Monarch token, or null")
     initiative_id: Optional[int] = Field(default=None, description="Player ID who holds the Initiative, or null")
     day_night: Optional[str] = Field(default=None, description="'day', 'night', or null (neither)")
+    turn_started_at: Optional[float] = Field(default=None, description="Epoch seconds when the current turn started")
 
 class NextTurnResponse(BaseModel):
     current_turn_id: int = Field(description="Player ID whose turn it now is")
@@ -158,8 +160,8 @@ class PlayerConfig(BaseModel):
     partner: Optional[str] = Field(default=None, description="Partner commander card name, if applicable")
 
 class InitRequest(BaseModel):
-    players: list[PlayerConfig] = Field(description="List of players (1–8)")
-    starting_life: int = Field(description="Starting life total for all players (typically 40 for Commander)")
+    players: list[PlayerConfig] = Field(min_length=1, max_length=8, description="List of players (1–8)")
+    starting_life: int = Field(gt=0, description="Starting life total for all players (typically 40 for Commander)")
 
 @app.post("/init", response_model=GameState)
 async def init_game(request: InitRequest):
@@ -216,8 +218,9 @@ class CommanderDamageRequest(BaseModel):
 async def update_commander_damage_endpoint(request: CommanderDamageRequest):
     """
     Record commander damage dealt from one player to another. Damage is tracked separately
-    per source (and per partner). Life total adjustment and elimination logic are handled
-    by the frontend. Returns the updated target player.
+    per source (and per partner). Life total adjustment and elimination (21+ commander
+    damage sets life to 0) are applied atomically in the backend. Returns the updated
+    target player.
     """
     try:
         update_commander_damage(request.target_id, request.source_id, request.delta, request.is_partner)
@@ -296,11 +299,12 @@ async def set_day_night_endpoint(request: DayNightRequest):
 # Serve built frontend — must come after all API routes
 DIST = Path(__file__).parent.parent / "frontend" / "dist"
 if DIST.exists():
+    DIST_RESOLVED = DIST.resolve()
     app.mount("/assets", StaticFiles(directory=DIST / "assets"), name="assets")
 
     @app.get("/{full_path:path}")
     def serve_spa(full_path: str):
-        file = DIST / full_path
-        if file.is_file():
-            return FileResponse(file)
+        target = (DIST / full_path).resolve()
+        if target.is_file() and (target == DIST_RESOLVED or DIST_RESOLVED in target.parents):
+            return FileResponse(target)
         return FileResponse(DIST / "index.html")

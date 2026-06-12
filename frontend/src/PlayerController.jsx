@@ -69,8 +69,10 @@ let deltaId = 0
 function PlayerController() {
   const { id } = useParams()
   const playerId = parseInt(id)
-  const { gameState, setGameState, currentTurnId, setCurrentTurnId, monarchId, initiativeId, dayNight, connected } = useGameState()
+  const { gameState, currentTurnId, setCurrentTurnId, monarchId, initiativeId, dayNight, connected } = useGameState()
   const { handleLife, handleCommanderDamage, handlePoison } = useGameActions(gameState)
+  const [localLife, setLocalLife] = useState(0)
+  const inFlightRef = useRef(0)
   const [showCounters, setShowCounters] = useState(false)
   const [showTokens, setShowTokens] = useState(false)
   const [showCmdrDmg, setShowCmdrDmg] = useState(false)
@@ -83,6 +85,11 @@ function PlayerController() {
   const holdFadeTimerRef = useRef(null)
 
   const player = gameState[playerId]
+
+  useEffect(() => {
+    if (inFlightRef.current === 0 && player) setLocalLife(player.life)
+  }, [player?.life])
+
   const opponents = Object.values(gameState).filter((p) => p.id !== playerId && p.commander)
   const currentTurnPlayer = gameState[currentTurnId]
 
@@ -145,9 +152,17 @@ function PlayerController() {
     setTimeout(() => setFloatDeltas((prev) => prev.filter((d) => d.id !== id)), 700)
   }
 
+  const sendLife = (delta) => {
+    setLocalLife((l) => l + delta)
+    inFlightRef.current += 1
+    Promise.resolve(handleLife(playerId, delta)).finally(() => {
+      inFlightRef.current -= 1
+    })
+  }
+
   const doLife = (delta) => {
     if (isEliminated) return
-    handleLife(playerId, delta)
+    sendLife(delta)
     vibrate(delta < 0 ? 50 : 25)
     spawnDelta(delta, delta > 0 ? 'plus' : 'minus')
   }
@@ -170,7 +185,7 @@ function PlayerController() {
     const total = holdAccumRef.current
     holdAccumRef.current = 0
     if (total !== 0) {
-      handleLife(playerId, total)
+      sendLife(total)
       spawnDelta(total, total > 0 ? 'plus' : 'minus')
     }
     clearTimeout(holdFadeTimerRef.current)
@@ -226,7 +241,7 @@ function PlayerController() {
             {holdAccum > 0 ? `+${holdAccum}` : holdAccum}
           </div>
         )}
-        <div className='pc-life-total'>{player.life}</div>
+        <div className='pc-life-total'>{localLife}</div>
         <div className='pc-life-buttons'>
           <button
             className='pc-btn pc-btn-minus'

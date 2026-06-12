@@ -27,13 +27,13 @@ bash start.sh   # Installs deps, builds frontend, starts backend on 0.0.0.0:8000
 Full-stack app: React SPA frontend + FastAPI backend with real-time WebSocket sync.
 
 ### Data flow
-All game mutations go through a REST endpoint → backend updates in-memory state → broadcasts full game state over WebSocket to all connected clients → frontend `useGameState` hook updates React state.
+All game mutations go through a REST endpoint → backend updates in-memory state → broadcasts full game state over WebSocket to all connected clients → frontend `useGameState` hook updates React state. Life totals and elimination are owned by the backend: poison ≥ 10 and commander damage ≥ 21 set life to 0, and commander damage subtracts from life, all applied atomically before the broadcast.
 
 State persists to `backend/game_state.db` (SQLite, `INSERT OR REPLACE` on a single row). Auto-loaded on startup. Migrates from legacy `game_state.json` if DB doesn't exist yet.
 
 ### Backend (`backend/`)
 - `main.py` — FastAPI app. REST endpoints listed below. WebSocket at `/ws`. Also serves the built frontend as static files.
-- `game_state.py` — In-memory state: `player_health` dict, `current_turn_id`, `monarch_id`, `initiative_id`, `day_night`. Pydantic `Player` model. Call `_save()` after any mutation.
+- `game_state.py` — In-memory state: `player_health` dict, `current_turn_id`, `monarch_id`, `initiative_id`, `day_night`, `turn_started_at`. Pydantic `Player` model. Single module-level SQLite connection (`_conn`). Call `_save()` after any mutation.
 - Scryfall API called during `/init`; rate-limited to one call per 0.5s.
 
 **REST endpoints:**

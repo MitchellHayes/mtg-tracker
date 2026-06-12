@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import { API_URL } from './config'
-import { SCRYFALL_HEADERS } from './api/scryfall'
 import './GameSetup.css'
 
 const DEFAULT_LIFE = 40
@@ -44,9 +43,7 @@ function CommanderInput({ value, onChange, placeholder }) {
       return
     }
     debounceRef.current = setTimeout(() => {
-      fetch(`https://api.scryfall.com/cards/autocomplete?q=${encodeURIComponent(val)}&include_extras=false`, {
-        headers: SCRYFALL_HEADERS
-      })
+      fetch(`https://api.scryfall.com/cards/autocomplete?q=${encodeURIComponent(val)}&include_extras=false`)
         .then((res) => {
           if (res.status === 429) return null
           return res.json()

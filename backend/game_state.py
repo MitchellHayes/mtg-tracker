@@ -1,6 +1,7 @@
 import sqlite3
 import json
 import os
+import time
 from pydantic import BaseModel, Field
 from typing import Optional
 
@@ -28,56 +29,52 @@ current_turn_id: int = 1
 monarch_id: Optional[int] = None    # player who currently holds the Monarch token
 initiative_id: Optional[int] = None # player who currently holds the Initiative
 day_night: Optional[str] = None     # "day" | "night" | None (neither)
+turn_started_at: Optional[float] = None  # epoch seconds when the current turn started
 
 # ── SQLite helpers ────────────────────────────────────────────────────────────
 
-def _get_conn() -> sqlite3.Connection:
-    conn = sqlite3.connect(DB_FILE)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS game_state (
-            id INTEGER PRIMARY KEY CHECK (id = 1),
-            state_json TEXT NOT NULL
-        )
-    """)
-    conn.commit()
-    return conn
+_conn = sqlite3.connect(DB_FILE, check_same_thread=False)
+_conn.execute("""CREATE TABLE IF NOT EXISTS game_state (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    state_json TEXT NOT NULL
+)""")
+_conn.commit()
 
 def _save():
-    conn = _get_conn()
     state_json = json.dumps({
         "players": {k: v.model_dump() for k, v in player_health.items()},
         "current_turn_id": current_turn_id,
         "monarch_id": monarch_id,
         "initiative_id": initiative_id,
         "day_night": day_night,
+        "turn_started_at": turn_started_at,
     })
-    conn.execute(
+    _conn.execute(
         "INSERT OR REPLACE INTO game_state (id, state_json) VALUES (1, ?)",
         (state_json,),
     )
-    conn.commit()
-    conn.close()
+    _conn.commit()
 
 def _load():
-    global current_turn_id, monarch_id, initiative_id, day_night
+    global current_turn_id, monarch_id, initiative_id, day_night, turn_started_at
 
-    # Migrate from JSON file if DB doesn't exist yet
-    if not os.path.exists(DB_FILE) and os.path.exists(_JSON_FILE):
+    # Migrate from JSON file if there's no DB row yet
+    _existing = _conn.execute("SELECT 1 FROM game_state WHERE id = 1").fetchone()
+    if _existing is None and os.path.exists(_JSON_FILE):
         try:
             with open(_JSON_FILE) as f:
                 data = json.load(f)
             for k, v in data.get("players", {}).items():
                 player_health[int(k)] = Player(**v)
             current_turn_id = data.get("current_turn_id", 1)
+            turn_started_at = data.get("turn_started_at")
             _save()
             return
         except Exception:
             pass
 
     try:
-        conn = _get_conn()
-        row = conn.execute("SELECT state_json FROM game_state WHERE id = 1").fetchone()
-        conn.close()
+        row = _conn.execute("SELECT state_json FROM game_state WHERE id = 1").fetchone()
         if not row:
             return
         data = json.loads(row[0])
@@ -87,6 +84,7 @@ def _load():
         monarch_id = data.get("monarch_id")
         initiative_id = data.get("initiative_id")
         day_night = data.get("day_night")
+        turn_started_at = data.get("turn_started_at")
     except Exception:
         pass  # corrupt state, start fresh
 
@@ -99,10 +97,11 @@ def get_state() -> dict:
         "monarch_id": monarch_id,
         "initiative_id": initiative_id,
         "day_night": day_night,
+        "turn_started_at": turn_started_at,
     }
 
 def initialize_game(player_configs: list[dict], starting_life: int):
-    global current_turn_id, monarch_id, initiative_id, day_night
+    global current_turn_id, monarch_id, initiative_id, day_night, turn_started_at
     player_health.clear()
     for i, config in enumerate(player_configs):
         player_id = i + 1
@@ -120,19 +119,21 @@ def initialize_game(player_configs: list[dict], starting_life: int):
     monarch_id = None
     initiative_id = None
     day_night = None
+    turn_started_at = time.time()
     _save()
 
 def reset_game():
-    global current_turn_id, monarch_id, initiative_id, day_night
+    global current_turn_id, monarch_id, initiative_id, day_night, turn_started_at
     player_health.clear()
     current_turn_id = 1
     monarch_id = None
     initiative_id = None
     day_night = None
+    turn_started_at = None
     _save()
 
 def next_turn():
-    global current_turn_id
+    global current_turn_id, turn_started_at
     ids = sorted(player_health.keys())
     if not ids:
         return current_turn_id
@@ -141,6 +142,7 @@ def next_turn():
         return current_turn_id
     idx = active_ids.index(current_turn_id) if current_turn_id in active_ids else -1
     current_turn_id = active_ids[(idx + 1) % len(active_ids)]
+    turn_started_at = time.time()
     _save()
     return current_turn_id
 
@@ -156,6 +158,8 @@ def update_poison(player_id: int, delta: int) -> Player:
     try:
         player = player_health[player_id]
         player.poison = max(0, player.poison + delta)
+        if player.poison >= POISON_LETHAL and player.life > 0:
+            player.life = 0
         _save()
         return player
     except KeyError:
@@ -165,7 +169,14 @@ def update_commander_damage(target_id: int, source_id: int, delta: int, is_partn
     try:
         player = player_health[target_id]
         key = f"{source_id}_p" if is_partner else str(source_id)
-        player.commander_damage[key] = max(0, player.commander_damage.get(key, 0) + delta)
+        old = player.commander_damage.get(key, 0)
+        new = max(0, old + delta)
+        player.commander_damage[key] = new
+        actual = new - old
+        if new >= COMMANDER_DAMAGE_LETHAL and player.life > 0:
+            player.life = 0
+        else:
+            player.life -= actual
         _save()
         return player
     except KeyError:
@@ -174,6 +185,8 @@ def update_commander_damage(target_id: int, source_id: int, delta: int, is_partn
 VALID_COUNTERS = {"energy", "rad", "speed"}
 
 MAX_SPEED = 4
+COMMANDER_DAMAGE_LETHAL = 21
+POISON_LETHAL = 10
 
 def update_counter(player_id: int, counter: str, delta: int) -> Player:
     if counter not in VALID_COUNTERS:

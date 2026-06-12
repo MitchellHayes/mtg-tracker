@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { API_URL } from '../config'
 
 function getWsUrl() {
@@ -17,18 +17,14 @@ function useGameState() {
   const [dayNight, setDayNight] = useState(null)
   const [connected, setConnected] = useState(false)
   const [turnStartedAt, setTurnStartedAt] = useState(null)
-  const prevTurnIdRef = useRef(null)
 
   const applyState = useCallback((data) => {
     if (data.players !== undefined) setGameState(data.players)
+    if (data.turn_started_at !== undefined) {
+      setTurnStartedAt(data.turn_started_at == null ? null : data.turn_started_at * 1000)
+    }
     if (data.current_turn_id !== undefined) {
-      setCurrentTurnId((prev) => {
-        if (data.current_turn_id !== prevTurnIdRef.current) {
-          prevTurnIdRef.current = data.current_turn_id
-          setTurnStartedAt(Date.now())
-        }
-        return data.current_turn_id
-      })
+      setCurrentTurnId(data.current_turn_id)
     }
     if (data.monarch_id !== undefined) setMonarchId(data.monarch_id)
     if (data.initiative_id !== undefined) setInitiativeId(data.initiative_id)

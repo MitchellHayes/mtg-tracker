@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react'
-import { SCRYFALL_HEADERS } from './api/scryfall'
 import './CardLookup.css'
 
 const COLOR_TINTS = {
@@ -26,7 +25,7 @@ function useAutocomplete(query) {
     clearTimeout(debounceRef.current)
     if (query.length < 2) { setSuggestions([]); return }
     debounceRef.current = setTimeout(() => {
-      fetch(`https://api.scryfall.com/cards/autocomplete?q=${encodeURIComponent(query)}&include_extras=false`, { headers: SCRYFALL_HEADERS })
+      fetch(`https://api.scryfall.com/cards/autocomplete?q=${encodeURIComponent(query)}&include_extras=false`)
         .then((r) => r.ok ? r.json() : null)
         .then((data) => setSuggestions(data?.data?.slice(0, 5) ?? []))
         .catch(() => {})
@@ -81,7 +80,7 @@ export default function CardLookup({ onClose }) {
     setLoading(true)
     setError(null)
     setCard(null)
-    fetch(`https://api.scryfall.com/cards/named?exact=${encodeURIComponent(name)}`, { headers: SCRYFALL_HEADERS })
+    fetch(`https://api.scryfall.com/cards/named?exact=${encodeURIComponent(name)}`)
       .then((r) => { if (!r.ok) throw new Error('Card not found'); return r.json() })
       .then((data) => setCard(data))
       .catch(() => setError('Card not found'))

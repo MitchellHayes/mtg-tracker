@@ -141,8 +141,14 @@ def next_turn():
     active_ids = [i for i in ids if player_health[i].life > 0]
     if not active_ids:
         return current_turn_id
-    idx = active_ids.index(current_turn_id) if current_turn_id in active_ids else -1
-    current_turn_id = active_ids[(idx + 1) % len(active_ids)]
+    # Advance in true turn (ID) order starting from the current player, so a player
+    # eliminated on their own turn passes to the player after them — not to the
+    # lowest living ID. _next_in_turn_order works whether or not current_turn_id is
+    # still alive; None means current_turn_id is the only living player.
+    heir = _next_in_turn_order(current_turn_id)
+    current_turn_id = heir if heir is not None else (
+        current_turn_id if current_turn_id in active_ids else active_ids[0]
+    )
     turn_started_at = time.time()
     # Reset per-turn flags for all players
     for player in player_health.values():
@@ -160,15 +166,35 @@ def _on_opponent_life_loss(player_id: int):
         active.speed += 1
         active.speed_increased_this_turn = True
 
+def _next_in_turn_order(from_id: int) -> Optional[int]:
+    # Next living player after from_id in turn (ID) order, or None if nobody is left.
+    ids = sorted(player_health.keys())
+    if from_id not in ids:
+        return None
+    start = ids.index(from_id)
+    for offset in range(1, len(ids)):
+        candidate = ids[(start + offset) % len(ids)]
+        if player_health[candidate].life > 0:
+            return candidate
+    return None
+
 def _on_elimination(player_id: int):
-    # Auto-transfer monarch/initiative to the active player when someone is eliminated.
+    # Auto-transfer monarch/initiative when someone is eliminated (CR 724.4 / 903.13):
+    # to the active player, or — if the eliminated player IS the active player —
+    # to the next living player in turn order.
     global monarch_id, initiative_id
     if player_health[player_id].life > 0:
         return
-    if initiative_id == player_id and current_turn_id != player_id:
-        initiative_id = current_turn_id
-    if monarch_id == player_id and current_turn_id != player_id:
-        monarch_id = current_turn_id
+    if player_id not in (monarch_id, initiative_id):
+        return
+    if current_turn_id != player_id:
+        heir = current_turn_id
+    else:
+        heir = _next_in_turn_order(player_id)
+    if initiative_id == player_id:
+        initiative_id = heir
+    if monarch_id == player_id:
+        monarch_id = heir
 
 def update_player(player_id: int, delta: int) -> Player:
     try:
